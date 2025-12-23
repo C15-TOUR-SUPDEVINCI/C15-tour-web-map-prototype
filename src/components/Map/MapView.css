@@ -1,0 +1,27 @@
+/**
+ * Styles pour le composant MapView
+ */
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Styles pour le conteneur Leaflet */
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Amélioration du curseur sur la carte */
+.leaflet-container {
+  cursor: crosshair;
+}
+
+.leaflet-container.leaflet-drag-target {
+  cursor: grab;
+}
+
+.leaflet-container.leaflet-drag-target:active {
+  cursor: grabbing;
+}

@@ -14,4 +14,10 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+  overflow: hidden;
+}
+
+/* Fix pour les icônes Leaflet manquantes */
+.leaflet-default-icon-path {
+  background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
 }

@@ -1,0 +1,46 @@
+/**
+ * Styles pour la liste des waypoints
+ */
+
+.waypoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* État vide */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6b7280;
+}
+
+.empty-message {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  color: #9ca3af;
+}
+
+.empty-instructions {
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: left;
+}
+
+.empty-instructions p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #374151;
+}
+
+.empty-instructions ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.empty-instructions li {
+  margin: 0.25rem 0;
+  color: #6b7280;
+}

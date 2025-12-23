@@ -1,0 +1,36 @@
+/**
+ * Styles pour les actions du trajet
+ */
+
+.route-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.clear-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  color: #ef4444;
+  border: 2px solid #ef4444;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-button:hover:not(:disabled) {
+  background-color: #ef4444;
+  color: white;
+}
+
+.clear-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #d1d5db;
+  color: #9ca3af;
+}

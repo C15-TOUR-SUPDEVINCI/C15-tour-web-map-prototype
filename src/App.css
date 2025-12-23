@@ -1,0 +1,49 @@
+/**
+ * Styles pour le layout principal de l'application
+ */
+
+.app-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Panneau latéral */
+.sidebar {
+  width: 380px;
+  min-width: 320px;
+  max-width: 500px;
+  height: 100%;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+/* Section de la carte */
+.map-section {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+    height: 40%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .map-section {
+    height: 60%;
+  }
+}
