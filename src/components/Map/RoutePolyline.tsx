@@ -1,37 +1,29 @@
 /**
- * Composant pour afficher la polyline du trajet entre les waypoints
+ * Composant pour afficher la polyline du trajet calculé par OSRM
  */
 
 import { Polyline } from 'react-leaflet';
 import { ROUTE_COLORS } from '../../domain/constants';
-import type { Waypoint } from '../../domain/waypoint.types';
+import { useRouteStore } from '../../store/useRouteStore';
 
 /**
- * Props du composant RoutePolyline
+ * RoutePolyline - Affiche le trajet calculé
  */
-interface RoutePolylineProps {
-  waypoints: Waypoint[];
-}
+export function RoutePolyline() {
+  const routeCoordinates = useRouteStore((state) => state.routeCoordinates);
 
-/**
- * RoutePolyline - Affiche le trajet entre les waypoints
- */
-export function RoutePolyline({ waypoints }: RoutePolylineProps) {
-  // Si moins de 2 waypoints, pas de trajet à afficher
-  if (waypoints.length < 2) {
+  // Si pas de coordonnées de route, pas de trajet à afficher
+  if (routeCoordinates.length < 2) {
     return null;
   }
 
-  // Conversion des waypoints en positions [lat, lng]
-  const positions: [number, number][] = waypoints.map((wp) => [wp.lat, wp.lng]);
-
   return (
     <Polyline
-      positions={positions}
+      positions={routeCoordinates}
       pathOptions={{
         color: ROUTE_COLORS.primary,
-        weight: 4,
-        opacity: 0.7,
+        weight: 5,
+        opacity: 0.8,
         lineCap: 'round',
         lineJoin: 'round',
       }}

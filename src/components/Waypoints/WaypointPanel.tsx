@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { WaypointList } from './WaypointList';
 import { RouteActions } from './RouteActions';
+import { RouteStats } from './RouteStats';
 import { Download } from 'lucide-react';
 import './WaypointPanel.css';
 
@@ -80,6 +81,9 @@ export function WaypointPanel() {
 
       {/* Liste des waypoints */}
       <div className="panel-content">
+        {/* Statistiques du trajet */}
+        <RouteStats />
+        
         <WaypointList />
       </div>
 

@@ -9,6 +9,7 @@ import { DEFAULT_MAP_CONFIG, OSM_TILE_URL, OSM_ATTRIBUTION } from '../../domain/
 import { SearchControl } from './SearchControl';
 import { MapMarkers } from './MapMarkers';
 import { RoutePolyline } from './RoutePolyline';
+import { RouteCalculator } from './RouteCalculator';
 import './MapView.css';
 
 /**
@@ -56,11 +57,14 @@ export function MapView() {
         {/* Gestion des clics sur la carte */}
         <MapClickHandler />
 
+        {/* Calcul automatique de la route */}
+        <RouteCalculator />
+
         {/* Marqueurs des waypoints */}
         <MapMarkers waypoints={waypoints} />
 
-        {/* Polyline du trajet */}
-        <RoutePolyline waypoints={waypoints} />
+        {/* Polyline du trajet calculé */}
+        <RoutePolyline />
       </MapContainer>
     </div>
   );

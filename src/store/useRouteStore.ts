@@ -16,6 +16,12 @@ interface RouteStore {
   routeName: string;
   /** Liste ordonnée des waypoints */
   waypoints: Waypoint[];
+  /** Coordonnées de la route calculée */
+  routeCoordinates: [number, number][];
+  /** Distance totale en mètres */
+  routeDistance: number | null;
+  /** Durée totale en secondes */
+  routeDuration: number | null;
 
   // Actions
   /** Définir le nom du trajet */
@@ -44,6 +50,9 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   // État initial
   routeName: 'Nouveau trajet',
   waypoints: [],
+  routeCoordinates: [],
+  routeDistance: null,
+  routeDuration: null,
 
   // Actions
   setRouteName: (name: string) => {
@@ -88,7 +97,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   },
 
   clearWaypoints: () => {
-    set({ waypoints: [] });
+    set({ 
+      waypoints: [],
+      routeCoordinates: [],
+      routeDistance: null,
+      routeDuration: null,
+    });
   },
 
   generatePayload: (): RoutePayload => {
