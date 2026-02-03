@@ -4,7 +4,8 @@
 
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import type { Waypoint } from '../../domain/waypoint.types';
+import type { Waypoint, TypeOfPoint } from '../../domain/waypoint.types';
+import { WAYPOINT_COLORS } from '../../domain/constants';
 
 /**
  * Props du composant MapMarkers
@@ -16,12 +17,12 @@ interface MapMarkersProps {
 /**
  * Icône personnalisée pour les marqueurs
  */
-const createCustomIcon = (order: number) => {
+const createCustomIcon = (order: number, type: TypeOfPoint) => {
   return L.divIcon({
-    className: 'custom-marker',
+    className: 'custom-marker', 
     html: `
       <div style="
-        background-color: #3b82f6;
+        background-color: ${WAYPOINT_COLORS[type]};
         color: white;
         width: 32px;
         height: 32px;
@@ -54,7 +55,7 @@ export function MapMarkers({ waypoints }: MapMarkersProps) {
         <Marker
           key={waypoint.id}
           position={[waypoint.lat, waypoint.lng]}
-          icon={createCustomIcon(waypoint.order)}
+          icon={createCustomIcon(waypoint.order, waypoint.type)}
         >
           <Popup>
             <div style={{ minWidth: '150px' }}>

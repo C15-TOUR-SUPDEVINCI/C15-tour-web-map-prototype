@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import type { Waypoint } from '../domain/waypoint.types';
+import type { Waypoint, TypeOfPoint } from '../domain/waypoint.types';
 import type { RoutePayload } from '../domain/route.types';
 
 /**
@@ -28,7 +28,7 @@ interface RouteStore {
   setRouteName: (name: string) => void;
   
   /** Ajouter un waypoint */
-  addWaypoint: (lat: number, lng: number, label: string) => void;
+  addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => void;
   
   /** Supprimer un waypoint par ID */
   removeWaypoint: (id: string) => void;
@@ -42,6 +42,15 @@ interface RouteStore {
   /** Générer le payload JSON pour le backend */
   generatePayload: () => RoutePayload;
 }
+
+export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
+  return waypoints.map((wp, index) => {
+    if (index === 0 || index === waypoints.length - 1) {
+      return { ...wp, type: "EXTREMITY" };
+    }
+    return { ...wp, type: "PASSAGE" };
+  });
+};
 
 /**
  * Hook Zustand pour gérer l'état global du trajet
@@ -59,7 +68,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set({ routeName: name });
   },
 
-  addWaypoint: (lat: number, lng: number, label: string) => {
+  addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => {
     const { waypoints } = get();
     const newWaypoint: Waypoint = {
       id: uuidv4(),
@@ -67,9 +76,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       lng,
       label,
       order: waypoints.length + 1,
+      type: type ?? "EXTREMITY",
     };
     
-    set({ waypoints: [...waypoints, newWaypoint] });
+    
+    const next = recalcWaypointsTypes([...waypoints, newWaypoint]);
+    set({ waypoints: next });
   },
 
   removeWaypoint: (id: string) => {
@@ -78,7 +90,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       .filter((wp) => wp.id !== id)
       .map((wp, index) => ({ ...wp, order: index + 1 })); // Réindexer les ordres
     
-    set({ waypoints: updatedWaypoints });
+    set({ waypoints: recalcWaypointsTypes(updatedWaypoints) });
   },
 
   reorderWaypoints: (startIndex: number, endIndex: number) => {
@@ -93,7 +105,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       order: index + 1,
     }));
     
-    set({ waypoints: reorderedWaypoints });
+    set({ waypoints: recalcWaypointsTypes(reorderedWaypoints) });
   },
 
   clearWaypoints: () => {
@@ -114,6 +126,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         lng: wp.lng,
         label: wp.label,
         order: wp.order,
+        type: wp.type,
       })),
     };
   },

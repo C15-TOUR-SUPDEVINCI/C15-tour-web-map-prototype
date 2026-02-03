@@ -57,3 +57,10 @@ export const MESSAGES = {
   waypointRemoved: 'Étape supprimée',
   routeCleared: 'Trajet vidé',
 };
+
+export const WAYPOINT_COLORS = {
+  PAUSE: '#3b82f6', // Bleu
+  PASSAGE: '#10b981', // Vert
+  EXTREMITY: '#ef4444', // Rouge
+  USER: '#f59e0b', // Orange
+};

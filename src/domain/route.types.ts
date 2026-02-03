@@ -2,7 +2,7 @@
  * Types relatifs aux trajets (routes)
  */
 
-import type { Waypoint } from './waypoint.types';
+import type { Waypoint, TypeOfPoint } from './waypoint.types';
 
 /**
  * Représente un trajet complet avec ses waypoints
@@ -26,5 +26,6 @@ export interface RoutePayload {
     lng: number;
     label: string;
     order: number;
+    type: TypeOfPoint;
   }>;
 }
