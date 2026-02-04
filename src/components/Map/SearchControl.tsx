@@ -8,6 +8,7 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-control-geocoder';
 import { useRouteStore } from '../../store/useRouteStore';
+import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 
 /**
  * SearchControl - Barre de recherche d'adresse intégrée à la carte
@@ -18,9 +19,10 @@ export function SearchControl() {
 
   useEffect(() => {
     // Configuration du geocoder Nominatim
-    const geocoder = (L.Control as any).Geocoder.nominatim({
+    const geocoder = (L.Control as any).Geocoder.photon({
+      serviceUrl: 'https://photon.komoot.io/api/',
       geocodingQueryParams: {
-        countrycodes: 'fr', // Priorité France
+        lang: 'fr',
         limit: 5,
       },
     });
@@ -34,6 +36,7 @@ export function SearchControl() {
       showResultIcons: true,
       suggestMinLength: 3,
       suggestTimeout: 250,
+      suggest: true,
       position: 'topright',
     });
 
