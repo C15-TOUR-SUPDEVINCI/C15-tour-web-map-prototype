@@ -42,6 +42,8 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
     displayTitle = 'DÉPART';
   } else if (isLast) {
     displayTitle = 'ARRIVÉE';
+  } else {
+    displayTitle = `Étape ${waypoint.order}`;
   }
 
   const handleSaveLabel = () => {
@@ -95,9 +97,6 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
 
           <div className="waypoint-info">
             <div className="waypoint-address">{waypoint.label}</div>
-            <div className="waypoint-coords">
-              {waypoint.lat.toFixed(6)}, {waypoint.lng.toFixed(6)}
-            </div>
           </div>
         </div>
 

@@ -1,6 +1,5 @@
 import { Dashboard } from './components/Dashboard/Dashboard';
-import { WaypointPanel } from './components/Waypoints/WaypointPanel';
-import { MapView } from './components/Map/MapView';
+import EditorView from './views/EditorView';
 import Login from './views/Login';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
@@ -11,19 +10,8 @@ function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route
-        path="/editor"
-        element={
-          <div className="app-container">
-            <aside className="sidebar">
-              <WaypointPanel />
-            </aside>
-            <main className="map-section">
-              <MapView />
-            </main>
-          </div>
-        }
-      />
+      <Route path="/editor/:id" element={<EditorView />} />
+      <Route path="/editor" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

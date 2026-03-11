@@ -6,6 +6,7 @@ import { SearchControl } from './SearchControl';
 import { MapMarkers } from './MapMarkers';
 import { RoutePolyline } from './RoutePolyline';
 import { RouteCalculator } from './RouteCalculator';
+import { reverseGeocode } from '../../services/geocoding.service';
 import './MapView.css';
 
 // Force Leaflet à recalculer sa taille après le rendu (sinon la carte peut bugger)
@@ -25,11 +26,20 @@ function MapInvalidator() {
 // Gère le clic sur la carte pour ajouter un waypoint
 function MapClickHandler() {
   const addWaypoint = useRouteStore((state) => state.addWaypoint);
+  const updateWaypointAddress = useRouteStore((state) => state.updateWaypointAddress);
 
   useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng;
-      addWaypoint(lat, lng, `Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+      addWaypoint(lat, lng, `Chargement de l'adresse...`);
+      
+      reverseGeocode(lat, lng).then(address => {
+        const state = useRouteStore.getState();
+        const lastWaypoint = state.waypoints.at(-1);
+        if (lastWaypoint) {
+          updateWaypointAddress(lastWaypoint.id, address);
+        }
+      });
     },
   });
 

@@ -37,6 +37,7 @@ interface RouteStore {
   addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => void;
   removeWaypoint: (id: string) => void;
   updateWaypointLabel: (id: string, label: string) => void;
+  updateWaypointAddress: (id: string, address: string) => void;
   reorderWaypoints: (startIndex: number, endIndex: number) => void;
   moveWaypoint: (activeId: string, overId: string, overGroupId?: string) => void;
   clearWaypoints: () => void;
@@ -198,6 +199,14 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set((state) => ({
       waypoints: state.waypoints.map((wp) =>
         wp.id === id ? { ...wp, label } : wp
+      ),
+    }));
+  },
+
+  updateWaypointAddress: (id, address) => {
+    set((state) => ({
+      waypoints: state.waypoints.map((wp) =>
+        wp.id === id ? { ...wp, label: address } : wp
       ),
     }));
   },
