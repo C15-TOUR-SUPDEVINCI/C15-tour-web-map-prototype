@@ -1,14 +1,9 @@
-/**
- * Actions sur le trajet (vider, etc.)
- */
+// Bouton pour vider le trajet
 
 import { Trash2 } from 'lucide-react';
 import { useRouteStore } from '../../store/useRouteStore';
 import './RouteActions.css';
 
-/**
- * RouteActions - Boutons d'action sur le trajet
- */
 export function RouteActions() {
   const waypoints = useRouteStore((state) => state.waypoints);
   const clearWaypoints = useRouteStore((state) => state.clearWaypoints);

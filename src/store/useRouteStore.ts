@@ -1,48 +1,64 @@
-/**
- * Store Zustand pour la gestion du trajet et des waypoints
- */
+// Store Zustand — gère tout l'état de l'app (itinéraires, waypoints, groupes, route)
 
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import type { Waypoint, TypeOfPoint } from '../domain/waypoint.types';
+import type { Waypoint, TypeOfPoint, Group } from '../domain/waypoint.types';
 import type { RoutePayload } from '../domain/route.types';
+import type { Itinerary } from '../domain/itinerary.types';
 
-/**
- * Interface du store de route
- */
 interface RouteStore {
-  // State
-  /** Nom du trajet */
+  // Vue actuelle
+  view: 'dashboard' | 'editor';
+
+  // Itinéraire en cours d'édition
+  currentId: string | null;
   routeName: string;
-  /** Liste ordonnée des waypoints */
   waypoints: Waypoint[];
-  /** Coordonnées de la route calculée */
+  groups: Group[];
+
+  // Tous les itinéraires sauvegardés
+  itineraries: Itinerary[];
+
+  // Données du tracé calculé
   routeCoordinates: [number, number][];
-  /** Distance totale en mètres */
+  routeLegs: { distance: number; duration: number }[];
   routeDistance: number | null;
-  /** Durée totale en secondes */
   routeDuration: number | null;
 
   // Actions
-  /** Définir le nom du trajet */
+  setView: (view: 'dashboard' | 'editor') => void;
   setRouteName: (name: string) => void;
-  
-  /** Ajouter un waypoint */
+
+  // Itinéraires
+  loadAll: () => void;
+  createNew: () => void;
+  saveCurrent: () => void;
+  openItinerary: (id: string) => void;
+  deleteItinerary: (id: string) => void;
+  exitEditor: () => void;
+
+  // Waypoints
   addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => void;
-  
-  /** Supprimer un waypoint par ID */
   removeWaypoint: (id: string) => void;
-  
-  /** Réordonner les waypoints (drag & drop) */
+  updateWaypointLabel: (id: string, label: string) => void;
   reorderWaypoints: (startIndex: number, endIndex: number) => void;
-  
-  /** Vider tous les waypoints */
+  moveWaypoint: (activeId: string, overId: string, overGroupId?: string) => void;
   clearWaypoints: () => void;
-  
-  /** Générer le payload JSON pour le backend */
+
+  // Groupes
+  addGroup: (name: string) => void;
+  removeGroup: (id: string) => void;
+  updateGroup: (id: string, name: string) => void;
+  setWaypointGroup: (waypointId: string, groupId: string) => void;
+
+  // Export
   generatePayload: () => RoutePayload;
 }
 
+const DEFAULT_GROUP_ID = 'default-group';
+const STORAGE_KEY = 'c15-itineraries';
+
+// Met à jour les types des waypoints : premier et dernier = EXTREMITY, le reste = PASSAGE
 export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
   return waypoints.map((wp, index) => {
     if (index === 0 || index === waypoints.length - 1) {
@@ -52,24 +68,109 @@ export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
   });
 };
 
-/**
- * Hook Zustand pour gérer l'état global du trajet
- */
 export const useRouteStore = create<RouteStore>((set, get) => ({
-  // État initial
+  view: 'dashboard',
+  currentId: null,
   routeName: 'Nouveau trajet',
   waypoints: [],
+  groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+  itineraries: [],
   routeCoordinates: [],
+  routeLegs: [],
   routeDistance: null,
   routeDuration: null,
 
-  // Actions
-  setRouteName: (name: string) => {
+  setView: (view) => set({ view }),
+
+  // Charge tous les itinéraires depuis le localStorage
+  loadAll: () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        set({ itineraries: JSON.parse(saved) });
+      } catch (e) {
+        console.error('Failed to load itineraries from localStorage', e);
+      }
+    }
+  },
+
+  createNew: () => {
+    set({
+      view: 'editor',
+      currentId: uuidv4(),
+      routeName: 'Nouveau trajet',
+      waypoints: [],
+      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+      routeCoordinates: [],
+      routeLegs: [],
+      routeDistance: null,
+      routeDuration: null,
+    });
+  },
+
+  saveCurrent: () => {
+    const { currentId, routeName, waypoints, groups, itineraries } = get();
+    if (!currentId) return;
+
+    const currentItinerary: Itinerary = {
+      id: currentId,
+      name: routeName,
+      lastModified: new Date().toISOString(),
+      waypoints,
+      groups,
+    };
+
+    const existingIndex = itineraries.findIndex((it) => it.id === currentId);
+    let nextItineraries = [...itineraries];
+
+    if (existingIndex >= 0) {
+      nextItineraries[existingIndex] = currentItinerary;
+    } else {
+      nextItineraries.push(currentItinerary);
+    }
+
+    set({ itineraries: nextItineraries });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItineraries));
+  },
+
+  openItinerary: (id) => {
+    const { itineraries } = get();
+    const itinerary = itineraries.find((it) => it.id === id);
+    if (itinerary) {
+      set({
+        view: 'editor',
+        currentId: itinerary.id,
+        routeName: itinerary.name,
+        waypoints: itinerary.waypoints,
+        groups: itinerary.groups,
+        routeCoordinates: [], // recalculé par RouteCalculator
+        routeLegs: [],
+        routeDistance: null,
+        routeDuration: null,
+      });
+    }
+  },
+
+  deleteItinerary: (id) => {
+    const { itineraries } = get();
+    const nextItineraries = itineraries.filter((it) => it.id !== id);
+    set({ itineraries: nextItineraries });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItineraries));
+  },
+
+  exitEditor: () => {
+    get().saveCurrent();
+    set({ view: 'dashboard' });
+  },
+
+  setRouteName: (name) => {
     set({ routeName: name });
   },
 
-  addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => {
-    const { waypoints } = get();
+  addWaypoint: (lat, lng, label, type) => {
+    const { waypoints, groups } = get();
+    const targetGroupId = groups.at(-1)?.id || DEFAULT_GROUP_ID;
+
     const newWaypoint: Waypoint = {
       id: uuidv4(),
       lat,
@@ -77,56 +178,132 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       label,
       order: waypoints.length + 1,
       type: type ?? "EXTREMITY",
+      groupId: targetGroupId,
     };
-    
-    
+
     const next = recalcWaypointsTypes([...waypoints, newWaypoint]);
     set({ waypoints: next });
   },
 
-  removeWaypoint: (id: string) => {
+  removeWaypoint: (id) => {
     const { waypoints } = get();
     const updatedWaypoints = waypoints
       .filter((wp) => wp.id !== id)
-      .map((wp, index) => ({ ...wp, order: index + 1 })); // Réindexer les ordres
-    
+      .map((wp, index) => ({ ...wp, order: index + 1 }));
+
     set({ waypoints: recalcWaypointsTypes(updatedWaypoints) });
   },
 
-  reorderWaypoints: (startIndex: number, endIndex: number) => {
+  updateWaypointLabel: (id, label) => {
+    set((state) => ({
+      waypoints: state.waypoints.map((wp) =>
+        wp.id === id ? { ...wp, label } : wp
+      ),
+    }));
+  },
+
+  reorderWaypoints: (startIndex, endIndex) => {
     const { waypoints } = get();
     const result = Array.from(waypoints);
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
-    
-    // Réindexer les ordres après réorganisation
+
     const reorderedWaypoints = result.map((wp, index) => ({
       ...wp,
       order: index + 1,
     }));
-    
+
     set({ waypoints: recalcWaypointsTypes(reorderedWaypoints) });
   },
 
+  moveWaypoint: (activeId, overId, overGroupId) => {
+    const { waypoints } = get();
+    const activeIndex = waypoints.findIndex((wp) => wp.id === activeId);
+    const overIndex = waypoints.findIndex((wp) => wp.id === overId);
+
+    if (activeIndex === -1) return;
+
+    let nextWaypoints = [...waypoints];
+    const [movedWaypoint] = nextWaypoints.splice(activeIndex, 1);
+
+    // Change de groupe si on drop dans un autre groupe
+    if (overGroupId) {
+      movedWaypoint.groupId = overGroupId;
+    } else if (overIndex !== -1) {
+      movedWaypoint.groupId = waypoints[overIndex].groupId;
+    }
+
+    // Insère à la bonne position
+    const insertAt = overIndex === -1 ? nextWaypoints.length : overIndex;
+    nextWaypoints.splice(insertAt, 0, movedWaypoint);
+
+    // Recalcule l'ordre et les types
+    const updated = nextWaypoints.map((wp, index) => ({
+      ...wp,
+      order: index + 1,
+    }));
+
+    set({ waypoints: recalcWaypointsTypes(updated) });
+  },
+
   clearWaypoints: () => {
-    set({ 
+    set({
       waypoints: [],
       routeCoordinates: [],
+      routeLegs: [],
       routeDistance: null,
       routeDuration: null,
     });
   },
 
+  addGroup: (name: string) => {
+    const newGroup: Group = { id: uuidv4(), name };
+    set((state) => ({ groups: [...state.groups, newGroup] }));
+  },
+
+  removeGroup: (id: string) => {
+    if (id === DEFAULT_GROUP_ID) return;
+
+    set((state) => {
+      const filteredGroups = state.groups.filter(g => g.id !== id);
+      // Les waypoints orphelins retournent dans le groupe par défaut
+      const updatedWaypoints = state.waypoints.map(wp =>
+        wp.groupId === id ? { ...wp, groupId: DEFAULT_GROUP_ID } : wp
+      );
+
+      return {
+        groups: filteredGroups,
+        waypoints: updatedWaypoints
+      };
+    });
+  },
+
+  updateGroup: (id: string, name: string) => {
+    set((state) => ({
+      groups: state.groups.map(g => g.id === id ? { ...g, name } : g)
+    }));
+  },
+
+  setWaypointGroup: (waypointId: string, groupId: string) => {
+    set((state) => ({
+      waypoints: state.waypoints.map(wp =>
+        wp.id === waypointId ? { ...wp, groupId } : wp
+      )
+    }));
+  },
+
   generatePayload: (): RoutePayload => {
-    const { routeName, waypoints } = get();
+    const { routeName, waypoints, groups } = get();
     return {
       name: routeName,
+      groups,
       waypoints: waypoints.map((wp) => ({
         lat: wp.lat,
         lng: wp.lng,
         label: wp.label,
         order: wp.order,
         type: wp.type,
+        groupId: wp.groupId,
       })),
     };
   },

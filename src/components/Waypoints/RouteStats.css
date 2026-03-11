@@ -4,64 +4,63 @@
 
 .route-stats {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 0.75rem;
-  margin-bottom: 1rem;
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  flex-direction: column;
+  background-color: white;
+  border: 3px solid var(--primary-rose);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  color: var(--primary-rose);
+  box-shadow: 0 10px 30px rgba(187, 72, 124, 0.15);
+  margin-top: auto;
+  min-height: 120px;
+  justify-content: space-between;
+  pointer-events: auto;
+}
+
+.stat-header {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
 }
 
 .stat-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.stat-icon {
-  flex-shrink: 0;
-  opacity: 0.9;
-}
-
-.stat-content {
-  display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  opacity: 0.9;
-  font-weight: 500;
 }
 
 .stat-value {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
+/* On cache les labels pour rester minimaliste */
+.stat-label,
+.stat-icon,
 .stat-divider {
-  width: 1px;
-  height: 2.5rem;
-  background-color: rgba(255, 255, 255, 0.3);
+  display: none;
 }
 
 /* Responsive */
 @media (max-width: 400px) {
   .route-stats {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+    padding: 1rem;
   }
 
-  .stat-divider {
-    display: none;
+  .stat-label {
+    font-size: 0.8rem;
   }
 
-  .stat-item {
-    justify-content: center;
+  .stat-value {
+    font-size: 1rem;
   }
 }

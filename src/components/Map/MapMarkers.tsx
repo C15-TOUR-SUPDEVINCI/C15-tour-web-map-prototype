@@ -1,25 +1,18 @@
-/**
- * Composant pour afficher les marqueurs des waypoints sur la carte
- */
+// Marqueurs personnalisés sur la carte (un par waypoint)
 
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { Waypoint, TypeOfPoint } from '../../domain/waypoint.types';
 import { WAYPOINT_COLORS } from '../../domain/constants';
 
-/**
- * Props du composant MapMarkers
- */
 interface MapMarkersProps {
   waypoints: Waypoint[];
 }
 
-/**
- * Icône personnalisée pour les marqueurs
- */
+// Crée un marqueur rond avec le numéro du point
 const createCustomIcon = (order: number, type: TypeOfPoint) => {
   return L.divIcon({
-    className: 'custom-marker', 
+    className: 'custom-marker',
     html: `
       <div style="
         background-color: ${WAYPOINT_COLORS[type]};
@@ -45,9 +38,6 @@ const createCustomIcon = (order: number, type: TypeOfPoint) => {
   });
 };
 
-/**
- * MapMarkers - Affiche tous les marqueurs des waypoints
- */
 export function MapMarkers({ waypoints }: MapMarkersProps) {
   return (
     <>

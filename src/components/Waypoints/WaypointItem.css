@@ -4,98 +4,127 @@
 
 .waypoint-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-}
-
-.waypoint-item:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-.waypoint-item.dragging {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  cursor: grabbing;
-}
-
-/* Handle de drag */
-.drag-handle {
-  background: none;
+  flex-direction: column;
+  background-color: transparent;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0;
   border: none;
-  color: #9ca3af;
-  cursor: grab;
-  padding: 0.25rem;
+  box-shadow: none;
+}
+
+.waypoint-main-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  /* Padding réduit pour être plus compact */
+  width: 100%;
+}
+
+.waypoint-icon-container {
+  color: var(--primary-rose);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  flex-shrink: 0;
+  width: 42px;
+  /* Largeur fixe pour éviter les décalages */
+  height: 42px;
+  overflow: visible;
+  position: relative;
+  margin-right: 0.5rem;
 }
 
-.drag-handle:hover {
-  color: #3b82f6;
+/* Positionnement des icônes de trajet */
+.waypoint-icon-container .custom-icon {
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  object-fit: contain;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Numéro d'ordre */
-.waypoint-order {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background-color: #3b82f6;
-  color: white;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  min-width: 3rem;
-  justify-content: center;
-}
-
-/* Informations */
-.waypoint-info {
+.waypoint-content {
   flex: 1;
   min-width: 0;
 }
 
-.waypoint-label {
-  margin: 0 0 0.25rem 0;
-  font-weight: 500;
-  color: #111827;
+.waypoint-title {
+  font-size: 0.95rem;
+  /* Plus compact */
+  font-weight: 700;
+  color: var(--primary-rose);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.waypoint-coords {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-family: 'Courier New', monospace;
-}
-
-/* Bouton supprimer */
-.delete-button {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  padding: 0.25rem;
+.waypoint-right {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
+  gap: 0.5rem;
+  /* Espacement réduit entre les boutons */
+  flex-shrink: 0;
 }
 
-.delete-button:hover {
-  background-color: #fee2e2;
-  color: #dc2626;
+.item-action-btn,
+.item-delete-btn {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
+
+.waypoint-item.dragging {
+  box-shadow: 0 12px 24px rgba(187, 72, 124, 0.2);
+  cursor: grabbing;
+  opacity: 0.9;
+  border-color: var(--primary-rose);
+}
+
+.group-selection-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  /* Le texte peut revenir à la ligne si besoin */
+}
+
+.group-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.group-select {
+  background: white;
+  border: 1px solid var(--primary-rose-alpha-20);
+  color: var(--primary-rose);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+  max-width: 120px;
+  /* Limite la largeur du dropdown */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.group-select:hover {
+  border-color: var(--primary-rose);
+  background-color: var(--primary-rose-alpha-10);
+}
+
+/* Bouton suppr */

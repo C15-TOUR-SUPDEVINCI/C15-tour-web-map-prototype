@@ -1,31 +1,21 @@
-/**
- * Types relatifs aux trajets (routes)
- */
+import type { Waypoint, TypeOfPoint, Group } from './waypoint.types';
 
-import type { Waypoint, TypeOfPoint } from './waypoint.types';
-
-/**
- * Représente un trajet complet avec ses waypoints
- */
+// Un trajet complet avec ses waypoints
 export interface Route {
-  /** Nom du trajet */
   name: string;
-  /** Liste ordonnée des waypoints */
   waypoints: Waypoint[];
 }
 
-/**
- * Payload JSON à envoyer au backend
- */
+// Format d'export JSON (pour le backend ou l'export fichier)
 export interface RoutePayload {
-  /** Nom du trajet */
   name: string;
-  /** Liste des waypoints avec leurs coordonnées et ordre */
+  groups: Group[];
   waypoints: Array<{
     lat: number;
     lng: number;
     label: string;
     order: number;
     type: TypeOfPoint;
+    groupId: string;
   }>;
 }

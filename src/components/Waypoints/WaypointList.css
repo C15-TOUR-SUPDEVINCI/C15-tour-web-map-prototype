@@ -1,46 +1,112 @@
-/**
- * Styles pour la liste des waypoints
- */
-
-.waypoint-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* État vide */
 .empty-state {
+  padding: 40px 20px;
   text-align: center;
-  padding: 2rem 1rem;
-  color: #6b7280;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #e2e8f0;
 }
 
 .empty-message {
   font-size: 1rem;
-  margin-bottom: 1.5rem;
-  color: #9ca3af;
+  color: #64748b;
+  margin-bottom: 20px;
 }
 
 .empty-instructions {
-  background-color: #f3f4f6;
-  border-radius: 0.5rem;
-  padding: 1rem;
   text-align: left;
-}
-
-.empty-instructions p {
-  margin: 0 0 0.5rem 0;
-  font-weight: 600;
-  color: #374151;
+  font-size: 0.9rem;
+  color: #475569;
 }
 
 .empty-instructions ul {
-  margin: 0;
-  padding-left: 1.5rem;
-  list-style-type: disc;
+  margin-top: 8px;
+  padding-left: 20px;
 }
 
 .empty-instructions li {
-  margin: 0.25rem 0;
-  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.waypoint-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.waypoint-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 2rem;
+}
+
+.group-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--primary-rose-alpha-20);
+  color: var(--primary-rose);
+}
+
+.group-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.group-header-icon {
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.group-section-name {
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.group-section-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.group-section-stats .separator {
+  opacity: 0.5;
+}
+
+.waypoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 20px;
+  transition: all 0.2s ease;
+  padding: 4px;
+  border-radius: var(--radius-md);
+}
+
+.waypoint-list.is-over {
+  background-color: var(--primary-rose-alpha-10);
+  outline: 2px dashed var(--primary-rose);
+  outline-offset: 2px;
+}
+
+.empty-group-placeholder {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  font-style: italic;
 }

@@ -8,13 +8,11 @@
   position: relative;
 }
 
-/* Styles pour le conteneur Leaflet */
+/**
+ * Styles pour le conteneur Leaflet
+ */
 .leaflet-container {
   font-family: inherit;
-}
-
-/* Amélioration du curseur sur la carte */
-.leaflet-container {
   cursor: crosshair;
 }
 
@@ -24,4 +22,75 @@
 
 .leaflet-container.leaflet-drag-target:active {
   cursor: grabbing;
+}
+
+/* Barre de recherche Leaflet */
+.leaflet-control-geocoder {
+  border-radius: var(--radius-lg) !important;
+  border: 2px solid var(--primary-rose) !important;
+  box-shadow: var(--shadow-rose) !important;
+  overflow: hidden;
+  background-color: var(--bg-glass) !important;
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+}
+
+.leaflet-control-geocoder-form input {
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.leaflet-control-geocoder-icon {
+  background-color: transparent !important;
+}
+
+/* Boutons de zoom */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  background-color: var(--bg-glass) !important;
+  backdrop-filter: blur(var(--blur-amount));
+  color: var(--primary-rose) !important;
+  border: 1px solid var(--primary-rose-alpha-10) !important;
+  font-weight: bold !important;
+}
+
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+  background-color: var(--primary-rose-alpha-10) !important;
+  color: var(--primary-rose-dark) !important;
+}
+
+/* Popups */
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md) !important;
+  background-color: var(--bg-glass-dark) !important;
+  backdrop-filter: blur(var(--blur-amount));
+  color: var(--text-main) !important;
+  border: 1px solid var(--primary-rose-alpha-10);
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--bg-glass-dark) !important;
+}
+
+/* Marqueur custom en forme de bulle */
+.custom-marker>div {
+  border: 4px solid var(--primary-rose) !important;
+  background-color: white !important;
+  color: var(--primary-rose) !important;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.custom-marker:hover>div {
+  transform: rotate(-45deg) scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(187, 72, 124, 0.4) !important;
 }
