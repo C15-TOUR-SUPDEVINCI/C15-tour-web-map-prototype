@@ -2,9 +2,21 @@
 
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
-import L from 'leaflet';
 import { geocoder, geocoders } from 'leaflet-control-geocoder';
+import type { Control } from 'leaflet';
 import { useRouteStore } from '../../store/useRouteStore';
+
+type GeocodeEvent = {
+  geocode?: {
+    center: { lat: number; lng: number };
+    name?: string;
+  };
+};
+
+type GeocoderControl = Control & {
+  addTo: (map: unknown) => void;
+  on: (event: 'markgeocode', handler: (e: GeocodeEvent) => void) => void;
+};
 
 export function SearchControl() {
   const map = useMap();
@@ -13,17 +25,17 @@ export function SearchControl() {
   useEffect(() => {
     if (!map) return;
 
-    let searchControl: any = null;
+    let searchControl: GeocoderControl | null = null;
 
     try {
-      const nominatimGeocoder = new (geocoders as any).Nominatim({
+      const nominatimGeocoder = new (geocoders as unknown as { Nominatim: new (o: unknown) => unknown }).Nominatim({
         geocodingQueryParams: {
           countrycodes: 'fr',
           limit: 5,
         },
       });
 
-      searchControl = (geocoder as any)({
+      searchControl = (geocoder as unknown as (opts: unknown) => GeocoderControl)({
         geocoder: nominatimGeocoder,
         defaultMarkGeocode: false,
         placeholder: 'Rechercher une adresse...',
@@ -37,7 +49,7 @@ export function SearchControl() {
       searchControl.addTo(map);
 
       // Quand l'utilisateur sélectionne un résultat, on l'ajoute comme waypoint
-      searchControl.on('markgeocode', (e: any) => {
+      searchControl.on('markgeocode', (e) => {
         if (e && e.geocode) {
           const { center, name } = e.geocode;
           const { lat, lng } = center;
@@ -53,7 +65,7 @@ export function SearchControl() {
       if (map && searchControl) {
         try {
           map.removeControl(searchControl);
-        } catch (e) {
+        } catch {
           // pas grave
         }
       }
