@@ -16,7 +16,6 @@ export function WaypointPanel() {
   const saveCurrent = useRouteStore((state) => state.saveCurrent);
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [showGroups, setShowGroups] = useState(false);
 
   const handleExportJSON = () => {
     const payload = generatePayload();
@@ -75,7 +74,7 @@ export function WaypointPanel() {
         </header>
 
         <div className="panel-content">
-          {!showGroups ? (
+          {/* {!showGroups ? (
             <button
               className="toggle-groups-btn"
               onClick={() => setShowGroups(true)}
@@ -92,7 +91,7 @@ export function WaypointPanel() {
               </button>
               <GroupManager />
             </>
-          )}
+          )} */}
 
           <WaypointList />
         </div>

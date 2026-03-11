@@ -22,6 +22,8 @@ import { formatDistance, formatDuration } from '../../services/routing.service';
 import './WaypointList.css';
 
 import iconFlower from '../../assets/icons/icon-flower.png';
+import { useState } from 'react';
+import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 
 // Zone droppable pour un groupe (permet de glisser un point dans un groupe vide)
 function DroppableGroupZone({ groupId, children }: { groupId: string; children: React.ReactNode }) {
@@ -42,6 +44,35 @@ export function WaypointList() {
   const groups = useRouteStore((state) => state.groups);
   const routeLegs = useRouteStore((state) => state.routeLegs);
   const moveWaypoint = useRouteStore((state) => state.moveWaypoint);
+
+  const addGroup = useRouteStore((state) => state.addGroup);
+  const removeGroup = useRouteStore((state) => state.removeGroup);
+  const updateGroup = useRouteStore((state) => state.updateGroup);
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
+  const handleAddGroup = () => {
+    if (newGroupName.trim()) {
+      addGroup(newGroupName.trim());
+      setNewGroupName('');
+      setIsAdding(false);
+    }
+  };
+
+  const handleStartEdit = (id: string, name: string) => {
+    setEditingId(id);
+    setEditingName(name);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingId && editingName.trim()) {
+      updateGroup(editingId, editingName.trim());
+      setEditingId(null);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -119,18 +150,84 @@ export function WaypointList() {
         strategy={verticalListSortingStrategy}
       >
         <div className="waypoint-list-container">
+          <div className="add-group-section">
+            {isAdding ? (
+              <div className="group-edit-row">
+                <input
+                  type="text"
+                  className="group-input"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Nom du nouveau groupe..."
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
+                  onBlur={() => !newGroupName && setIsAdding(false)}
+                />
+                <button className="icon-button success" onClick={handleAddGroup} title="Valider">
+                  <Check size={16} />
+                </button>
+                <button className="icon-button danger" onClick={() => setIsAdding(false)} title="Annuler">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <button className="add-group-btn" onClick={() => setIsAdding(true)}>
+                <Plus size={18} /> Ajouter un groupe
+              </button>
+            )}
+          </div>
+
           {groupStats.map((group) => (
             <section key={group.id} className="waypoint-group-section">
               <header className="group-section-header">
-                <div className="group-header-title">
-                  <img src={iconFlower} alt="" className="custom-icon group-header-icon" />
-                  <span className="group-section-name">{group.name}</span>
-                </div>
-                <div className="group-section-stats">
-                  <span>{formatDistance(group.distance)}</span>
-                  <span className="separator">•</span>
-                  <span>{formatDuration(group.duration)}</span>
-                </div>
+                {editingId === group.id ? (
+                  <div className="group-edit-row full-width">
+                    <input
+                      type="text"
+                      className="group-input"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                    />
+                    <button className="icon-button success" onClick={handleSaveEdit} title="Sauvegarder">
+                      <Check size={16} />
+                    </button>
+                    <button className="icon-button danger" onClick={() => setEditingId(null)} title="Annuler">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="group-header-title">
+                      <img src={iconFlower} alt="" className="custom-icon group-header-icon" />
+                      <span className="group-section-name">{group.name}</span>
+                      <div className="group-header-actions">
+                        <button
+                          className="icon-button action-btn"
+                          onClick={() => handleStartEdit(group.id, group.name)}
+                          title="Renommer"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        {group.id !== 'default-group' && (
+                          <button
+                            className="icon-button danger action-btn"
+                            onClick={() => removeGroup(group.id)}
+                            title="Supprimer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="group-section-stats">
+                      <span>{formatDistance(group.distance)}</span>
+                      <span className="separator">•</span>
+                      <span>{formatDuration(group.duration)}</span>
+                    </div>
+                  </>
+                )}
               </header>
               <DroppableGroupZone groupId={group.id}>
                 {group.waypoints.length > 0 ? (
