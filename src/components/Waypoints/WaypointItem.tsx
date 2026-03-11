@@ -1,56 +1,53 @@
-/**
- * Item individuel de waypoint avec drag & drop
- */
-
+import { useState } from 'react';
+import { GripVertical, X, Edit2, Check } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, MapPin, Flag, Coffee, Navigation } from 'lucide-react';
 import { useRouteStore } from '../../store/useRouteStore';
-import type { Waypoint, TypeOfPoint } from '../../domain/waypoint.types';
+import type { Waypoint } from '../../domain/waypoint.types';
 import './WaypointItem.css';
 
-/**
- * Props du composant WaypointItem
- */
+import iconFlagStart from '../../assets/icons/icon-flag-start.png';
+import iconFlagEnd from '../../assets/icons/icon-flag-end.png';
+import iconTruck from '../../assets/icons/icon-truck.png';
+
 interface WaypointItemProps {
-  waypoint: Waypoint;
+  readonly waypoint: Waypoint;
 }
 
-const getTypeIcon = (type: TypeOfPoint) => {
-  switch (type) {
-    case 'EXTREMITY':
-      return <Flag size={16} />;
-    case 'PAUSE':
-      return <Coffee size={16} />;
-    case 'PASSAGE':
-    case 'USER':
-    default:
-      return <Navigation size={16} />;
+// Choix de l'icône selon la position dans le trajet
+const getTypeIcon = (order: number, total: number) => {
+  if (order === 1) {
+    return <img src={iconFlagStart} alt="Départ" className="custom-icon" />;
   }
-};
- 
-const getTypeLabel = (type: TypeOfPoint) => {
-  switch (type) {
-    case 'EXTREMITY':
-      return 'Extrémité';
-    case 'PAUSE':
-      return 'Pause';
-    case 'PASSAGE':
-      return 'Passage';
-    case 'USER':
-      return 'Utilisateur';
-    default:
-      return type;
+  if (order === total) {
+    return <img src={iconFlagEnd} alt="Arrivée" className="custom-icon" />;
   }
+  return <img src={iconTruck} alt="Point de passage" className="custom-icon" />;
 };
 
-/**
- * WaypointItem - Item individuel draggable
- */
+// Un waypoint dans la liste, draggable avec dnd-kit
 export function WaypointItem({ waypoint }: WaypointItemProps) {
   const removeWaypoint = useRouteStore((state) => state.removeWaypoint);
-  const TypeIcon = getTypeIcon(waypoint.type);
-  const typeLabel = getTypeLabel(waypoint.type);
+  const updateWaypointLabel = useRouteStore((state) => state.updateWaypointLabel);
+  const waypoints = useRouteStore((state) => state.waypoints);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState(waypoint.label);
+
+  const isFirst = waypoint.order === 1;
+  const isLast = waypoint.order === waypoints.length;
+
+  let displayTitle = waypoint.label;
+  if (isFirst) {
+    displayTitle = 'DÉPART';
+  } else if (isLast) {
+    displayTitle = 'ARRIVÉE';
+  }
+
+  const handleSaveLabel = () => {
+    updateWaypointLabel(waypoint.id, editLabel);
+    setIsEditing(false);
+  };
 
   const {
     attributes,
@@ -66,50 +63,72 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+  const totalWaypoints = waypoints.length;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`waypoint-item ${isDragging ? 'dragging' : ''}`}
+      className={`waypoint-item ${isDragging ? "dragging" : ""} ${isFirst || isLast ? "extremity" : ""}`}
     >
-      {/* Handle de drag */}
-      <button
-        className="drag-handle"
-        {...attributes}
-        {...listeners}
-        aria-label="Réorganiser"
-      >
-        <GripVertical size={18} />
-      </button>
+      <div className="waypoint-main-row">
+        <div className="waypoint-icon-container">
+          {getTypeIcon(waypoint.order, totalWaypoints)}
+        </div>
 
-      {/* Numéro d'ordre */}
-      <div className="waypoint-order">
-        <MapPin size={16} />
-        <span>{waypoint.order}</span>
+        <div className="waypoint-content">
+          <div className="waypoint-title-container">
+            {isEditing ? (
+              <input
+                type="text"
+                className="waypoint-title-input"
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+                onBlur={handleSaveLabel}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveLabel()}
+                autoFocus
+              />
+            ) : (
+              <h3 className="waypoint-title">{displayTitle}</h3>
+            )}
+          </div>
+
+          <div className="waypoint-info">
+            <div className="waypoint-address">{waypoint.label}</div>
+            <div className="waypoint-coords">
+              {waypoint.lat.toFixed(6)}, {waypoint.lng.toFixed(6)}
+            </div>
+          </div>
+        </div>
+
+        <div className="waypoint-right">
+          {!isFirst && !isLast && (
+            <button
+              className="item-action-btn btn-rose-outline"
+              onClick={() => setIsEditing(!isEditing)}
+              aria-label="Modifier le nom"
+            >
+              {isEditing ? <Check size={16} /> : <Edit2 size={16} />}
+            </button>
+          )}
+          <button
+            className="item-delete-btn btn-rose-outline"
+            onClick={() => removeWaypoint(waypoint.id)}
+            aria-label="Supprimer"
+          >
+            <X size={16} />
+          </button>
+
+          <button
+            className="drag-handle btn-rose-outline"
+            {...attributes}
+            {...listeners}
+            aria-label="Réorganiser"
+          >
+            <GripVertical size={24} />
+          </button>
+        </div>
       </div>
-
-      {/* Informations */}
-      <div className="waypoint-info">
-        <p className="waypoint-label">{waypoint.label}</p>
-
-        <p className="waypoint-type">
-          {TypeIcon}
-          <span>{typeLabel}</span>
-        </p>
-        <p className="waypoint-coords">
-          {waypoint.lat.toFixed(5)}, {waypoint.lng.toFixed(5)}
-        </p>
-      </div>
-
-      {/* Bouton supprimer */}
-      <button
-        className="delete-button"
-        onClick={() => removeWaypoint(waypoint.id)}
-        aria-label="Supprimer"
-      >
-        <X size={18} />
-      </button>
     </div>
   );
 }

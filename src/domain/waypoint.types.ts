@@ -1,24 +1,19 @@
-/**
- * Types relatifs aux waypoints (points d'étape)
- */
-
-
 export type TypeOfPoint = "PAUSE" | "PASSAGE" | "EXTREMITY" | "USER";
 
-/**
- * Représente un point d'étape (waypoint) dans le trajet
- */
-export interface Waypoint {
-  /** Identifiant unique du waypoint */
+// Groupe de points sur le trajet
+export interface Group {
   id: string;
-  /** Latitude (coordonnée géographique) */
+  name: string;
+  color?: string;
+}
+
+// Un waypoint = un point d'étape sur le trajet
+export interface Waypoint {
+  id: string;
   lat: number;
-  /** Longitude (coordonnée géographique) */
   lng: number;
-  /** Label/adresse du waypoint */
   label: string;
-  /** Ordre dans le trajet (1-indexed) */
-  order: number;
-  /** Type du waypoint */
+  order: number; // position dans le trajet (commence à 1)
   type: TypeOfPoint;
+  groupId: string;
 }

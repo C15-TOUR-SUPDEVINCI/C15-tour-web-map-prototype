@@ -1,60 +1,62 @@
-/**
- * Composant de recherche d'adresse (Geocoding)
- * Utilise leaflet-control-geocoder avec Nominatim
- */
+// Barre de recherche d'adresse sur la carte (Nominatim via leaflet-control-geocoder)
 
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet-control-geocoder';
+import { geocoder, geocoders } from 'leaflet-control-geocoder';
 import { useRouteStore } from '../../store/useRouteStore';
 
-/**
- * SearchControl - Barre de recherche d'adresse intégrée à la carte
- */
 export function SearchControl() {
   const map = useMap();
   const addWaypoint = useRouteStore((state) => state.addWaypoint);
 
   useEffect(() => {
-    // Configuration du geocoder Nominatim
-    const geocoder = (L.Control as any).Geocoder.nominatim({
-      geocodingQueryParams: {
-        countrycodes: 'fr', // Priorité France
-        limit: 5,
-      },
-    });
+    if (!map) return;
 
-    // Création du contrôle de recherche
-    const searchControl = (L.Control as any).geocoder({
-      geocoder: geocoder,
-      defaultMarkGeocode: false, // On gère manuellement l'ajout de waypoint
-      placeholder: 'Rechercher une adresse...',
-      errorMessage: 'Adresse non trouvée',
-      showResultIcons: true,
-      suggestMinLength: 3,
-      suggestTimeout: 250,
-      position: 'topright',
-    });
+    let searchControl: any = null;
 
-    // Ajout du contrôle à la carte
-    searchControl.addTo(map);
+    try {
+      const nominatimGeocoder = new (geocoders as any).Nominatim({
+        geocodingQueryParams: {
+          countrycodes: 'fr',
+          limit: 5,
+        },
+      });
 
-    // Gestion de l'événement de sélection d'un résultat
-    searchControl.on('markgeocode', (e: any) => {
-      const { center, name } = e.geocode;
-      const { lat, lng } = center;
+      searchControl = (geocoder as any)({
+        geocoder: nominatimGeocoder,
+        defaultMarkGeocode: false,
+        placeholder: 'Rechercher une adresse...',
+        errorMessage: 'Adresse non trouvée',
+        showResultIcons: true,
+        suggestMinLength: 3,
+        suggestTimeout: 250,
+        position: 'topright',
+      });
 
-      // Ajout du waypoint au store
-      addWaypoint(lat, lng, name || 'Adresse');
+      searchControl.addTo(map);
 
-      // Centrer la carte sur le résultat
-      map.setView(center, 15);
-    });
+      // Quand l'utilisateur sélectionne un résultat, on l'ajoute comme waypoint
+      searchControl.on('markgeocode', (e: any) => {
+        if (e && e.geocode) {
+          const { center, name } = e.geocode;
+          const { lat, lng } = center;
+          addWaypoint(lat, lng, name || 'Adresse');
+          map.setView(center, 15);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to initialize SearchControl:', err);
+    }
 
-    // Nettoyage lors du démontage
     return () => {
-      map.removeControl(searchControl);
+      if (map && searchControl) {
+        try {
+          map.removeControl(searchControl);
+        } catch (e) {
+          // pas grave
+        }
+      }
     };
   }, [map, addWaypoint]);
 

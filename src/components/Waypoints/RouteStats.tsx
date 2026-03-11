@@ -1,15 +1,9 @@
-/**
- * Composant affichant les statistiques du trajet (distance, durée)
- */
+// Affiche la distance et la durée totale du trajet
 
-import { MapPin, Clock } from 'lucide-react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { formatDistance, formatDuration } from '../../services/routing.service';
 import './RouteStats.css';
 
-/**
- * RouteStats - Affiche distance et durée du trajet
- */
 export function RouteStats() {
   const routeDistance = useRouteStore((state) => state.routeDistance);
   const routeDuration = useRouteStore((state) => state.routeDuration);
@@ -21,20 +15,14 @@ export function RouteStats() {
 
   return (
     <div className="route-stats">
-      <div className="stat-item">
-        <MapPin size={18} className="stat-icon" />
-        <div className="stat-content">
-          <span className="stat-label">Distance</span>
+      <div className="stat-header">TOTAL</div>
+
+      <div className="stats-grid">
+        <div className="stat-item">
           <span className="stat-value">{formatDistance(routeDistance)}</span>
         </div>
-      </div>
 
-      <div className="stat-divider" />
-
-      <div className="stat-item">
-        <Clock size={18} className="stat-icon" />
-        <div className="stat-content">
-          <span className="stat-label">Durée estimée</span>
+        <div className="stat-item">
           <span className="stat-value">{formatDuration(routeDuration)}</span>
         </div>
       </div>

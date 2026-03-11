@@ -4,7 +4,8 @@
 
 .route-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .clear-button {
@@ -12,25 +13,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background-color: #ffffff;
-  color: #ef4444;
-  border: 2px solid #ef4444;
-  border-radius: 0.5rem;
-  font-weight: 600;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: white;
+  color: var(--primary-rose);
+  border: 2px solid var(--primary-rose);
+  border-radius: var(--radius-lg);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-soft);
 }
 
 .clear-button:hover:not(:disabled) {
-  background-color: #ef4444;
+  background-color: var(--primary-rose);
   color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-rose);
 }
 
 .clear-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  border-color: #d1d5db;
-  color: #9ca3af;
+  border-color: var(--primary-rose-alpha-20);
+  color: var(--primary-rose-light);
+  box-shadow: none;
 }

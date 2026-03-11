@@ -1,3 +1,26 @@
+:root {
+  --primary-rose: #bb487c;
+  --primary-rose-light: #d16b9a;
+  --primary-rose-dark: #8e355d;
+  --primary-rose-alpha-10: rgba(187, 72, 124, 0.1);
+  --primary-rose-alpha-20: rgba(187, 72, 124, 0.2);
+
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass-dark: rgba(255, 255, 255, 0.95);
+  --blur-amount: 12px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 30px;
+
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-rose: 0 4px 15px rgba(187, 72, 124, 0.2);
+
+  --text-main: #2d3436;
+  --text-muted: #636e72;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -17,7 +40,35 @@ body {
   overflow: hidden;
 }
 
-/* Fix pour les icônes Leaflet manquantes */
+/* Fix icônes Leaflet */
 .leaflet-default-icon-path {
   background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
+}
+
+/* Style bouton rose utilisé partout dans l'app */
+.btn-rose-outline {
+  background-color: white !important;
+  border: 2px solid var(--primary-rose) !important;
+  color: var(--primary-rose) !important;
+  border-radius: var(--radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+
+.btn-rose-outline:hover {
+  background-color: var(--primary-rose) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-rose) !important;
+}
+
+.btn-rose-outline svg {
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
 }

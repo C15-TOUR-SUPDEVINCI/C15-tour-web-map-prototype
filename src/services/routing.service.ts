@@ -1,50 +1,27 @@
-/**
- * Service de calcul d'itinéraire avec OSRM
- */
+// Service de calcul d'itinéraire via l'API OSRM
 
 import type { Waypoint } from '../domain/waypoint.types';
 
-/**
- * Coordonnées [longitude, latitude] pour OSRM
- */
-type OSRMCoordinate = [number, number];
+type OSRMCoordinate = [number, number]; // [lng, lat] (inversé par rapport à Leaflet)
 
-/**
- * Résultat du routing OSRM
- */
+// Ce que renvoie le calcul de route
 export interface RouteResult {
-  /** Coordonnées de la route [lat, lng][] */
-  coordinates: [number, number][];
-  /** Distance totale en mètres */
-  distance: number;
-  /** Durée totale en secondes */
-  duration: number;
-  /** Ordre optimisé des waypoints (si optimisation activée) */
-  waypointOrder?: number[];
+  coordinates: [number, number][]; // tracé complet [lat, lng][]
+  distance: number; // en mètres
+  duration: number; // en secondes
+  legs: { distance: number; duration: number }[];
+  waypointOrder?: number[]; // rempli seulement si on optimise l'ordre
 }
 
-/**
- * Options de calcul de route
- */
 export interface RouteOptions {
-  /** Optimiser l'ordre des waypoints pour minimiser la distance */
-  optimize?: boolean;
-  /** Algorithme : 'fastest' (par défaut) ou 'shortest' */
+  optimize?: boolean; // réorganiser les points pour le trajet le plus court
   algorithm?: 'fastest' | 'shortest';
 }
 
-/**
- * URL du serveur OSRM public (démo)
- * Pour production, utilisez votre propre instance
- */
+// Serveur OSRM public (démo) — en prod il faudra notre propre instance
 const OSRM_BASE_URL = 'https://router.project-osrm.org';
 
-/**
- * Calcule un itinéraire entre plusieurs waypoints
- * @param waypoints Liste ordonnée des waypoints
- * @param options Options de calcul (optimisation, algorithme)
- * @returns Résultat avec coordonnées de la route, distance et durée
- */
+// Lance le calcul de route entre les waypoints donnés
 export async function calculateRoute(
   waypoints: Waypoint[],
   options: RouteOptions = {}
@@ -53,42 +30,38 @@ export async function calculateRoute(
     return null;
   }
 
-  const { optimize = false, algorithm = 'fastest' } = options;
+  const optimize = options.optimize ?? false;
 
   try {
-    // Conversion des waypoints en coordonnées OSRM (lng, lat)
+    // OSRM attend [lng, lat], Leaflet utilise [lat, lng]
     const coordinates: OSRMCoordinate[] = waypoints.map((wp) => [
       wp.lng,
       wp.lat,
     ]);
 
-    // Construction de l'URL OSRM
     const coordinatesString = coordinates
       .map((coord) => `${coord[0]},${coord[1]}`)
       .join(';');
 
-    // Paramètres de l'URL
     const params = new URLSearchParams({
       overview: 'full',
       geometries: 'geojson',
-      // Annotations pour plus de détails
       annotations: 'true',
     });
 
-    // Si optimisation demandée, on utilise l'API trip au lieu de route
+    // En mode optimisation on passe par l'endpoint "trip" au lieu de "route"
     let endpoint = 'route';
     if (optimize && waypoints.length > 2) {
       endpoint = 'trip';
-      params.set('source', 'first'); // Le premier waypoint reste fixe
-      params.set('destination', 'last'); // Le dernier waypoint reste fixe
-      params.set('roundtrip', 'false'); // Pas de retour au point de départ
+      params.set('source', 'first');
+      params.set('destination', 'last');
+      params.set('roundtrip', 'false');
     }
 
     const url = `${OSRM_BASE_URL}/${endpoint}/v1/driving/${coordinatesString}?${params.toString()}`;
 
     console.log('OSRM Request:', { endpoint, optimize, waypointsCount: waypoints.length });
 
-    // Appel à l'API OSRM
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -105,17 +78,21 @@ export async function calculateRoute(
 
     const route = data.routes[0];
 
-    // Conversion des coordonnées GeoJSON (lng, lat) en Leaflet (lat, lng)
+    // On remet les coordonnées dans le bon sens pour Leaflet
     const routeCoordinates: [number, number][] =
       route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
 
     const result: RouteResult = {
       coordinates: routeCoordinates,
-      distance: route.distance, // en mètres
-      duration: route.duration, // en secondes
+      distance: route.distance,
+      duration: route.duration,
+      legs: route.legs.map((leg: any) => ({
+        distance: leg.distance,
+        duration: leg.duration,
+      })),
     };
 
-    // Si optimisation, récupérer l'ordre des waypoints
+    // Récupère l'ordre optimisé si dispo
     if (optimize && data.waypoints) {
       result.waypointOrder = data.waypoints.map((wp: any) => wp.waypoint_index);
       console.log('Optimized waypoint order:', result.waypointOrder);
@@ -128,9 +105,7 @@ export async function calculateRoute(
   }
 }
 
-/**
- * Formate la distance en km ou m
- */
+// Affiche la distance en km ou m
 export function formatDistance(meters: number): string {
   if (meters >= 1000) {
     return `${(meters / 1000).toFixed(2)} km`;
@@ -138,9 +113,7 @@ export function formatDistance(meters: number): string {
   return `${Math.round(meters)} m`;
 }
 
-/**
- * Formate la durée en heures/minutes
- */
+// Affiche la durée en heures + minutes
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
