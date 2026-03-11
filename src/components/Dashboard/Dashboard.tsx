@@ -31,7 +31,7 @@ export function Dashboard() {
     const handleCardKeyDown = (e: React.KeyboardEvent, id: string) => {
         if (e.key === 'Enter' || e.key === ' ') {
             openItinerary(id);
-            navigate('/editor');
+            navigate(`/editor/${id}`);
         }
     };
 
@@ -48,7 +48,8 @@ export function Dashboard() {
                         className="create-btn"
                         onClick={() => {
                             createNew();
-                            navigate('/editor');
+                            const { currentId } = useRouteStore.getState();
+                            if (currentId) navigate(`/editor/${currentId}`);
                         }}
                     >
                         <Plus size={20} />
@@ -67,7 +68,8 @@ export function Dashboard() {
                             className="create-btn-large"
                             onClick={() => {
                                 createNew();
-                                navigate('/editor');
+                                const { currentId } = useRouteStore.getState();
+                                if (currentId) navigate(`/editor/${currentId}`);
                             }}
                         >
                             <Plus size={20} />
@@ -104,7 +106,7 @@ export function Dashboard() {
                                         className="card-body"
                                         onClick={() => {
                                             openItinerary(itinerary.id);
-                                            navigate('/editor');
+                                            navigate(`/editor/${itinerary.id}`);
                                         }}
                                         role="button"
                                         tabIndex={0}
@@ -128,7 +130,7 @@ export function Dashboard() {
                                         className="card-footer"
                                         onClick={() => {
                                             openItinerary(itinerary.id);
-                                            navigate('/editor');
+                                            navigate(`/editor/${itinerary.id}`);
                                         }}
                                         role="button"
                                         tabIndex={0}
