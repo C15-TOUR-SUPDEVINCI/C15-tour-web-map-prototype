@@ -44,108 +44,90 @@ export function Dashboard() {
                             <img src={logoImg} alt="Tour 95!" className="dashboard-logo" />
                         </div>
                     </div>
+                </header>
+
+                <div className="itinerary-grid">
+                    {itineraries.map((itinerary) => {
+                        const waypointCount = itinerary.waypoints.length;
+                        return (
+                            <div key={itinerary.id} className="itinerary-card">
+                                <div className="card-header">
+                                    <div className="card-icon">
+                                        <Navigation size={20} />
+                                    </div>
+                                    <div className="card-actions">
+                                        <button
+                                            className="card-action-btn delete"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Voulez-vous vraiment supprimer cet itinéraire ?')) {
+                                                    deleteItinerary(itinerary.id);
+                                                }
+                                            }}
+                                            title="Supprimer"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className="card-body"
+                                    onClick={() => {
+                                        openItinerary(itinerary.id);
+                                        navigate(`/editor/${itinerary.id}`);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
+                                >
+                                    <h3 className="itinerary-name">{itinerary.name}</h3>
+
+                                    <div className="itinerary-meta">
+                                        <div className="meta-item">
+                                            <Calendar size={14} />
+                                            <span>{formatDate(itinerary.lastModified)}</span>
+                                        </div>
+                                        <div className="meta-item">
+                                            <Map size={14} />
+                                            <span>{waypointCount} {waypointCount > 1 ? 'étapes' : 'étape'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className="card-footer"
+                                    onClick={() => {
+                                        openItinerary(itinerary.id);
+                                        navigate(`/editor/${itinerary.id}`);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
+                                >
+                                    <button className="edit-link" tabIndex={-1}>
+                                        <Edit3 size={16} />
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+
                     <button
-                        className="create-btn"
+                        className="create-card"
                         onClick={() => {
                             createNew();
                             const { currentId } = useRouteStore.getState();
                             if (currentId) navigate(`/editor/${currentId}`);
                         }}
                     >
-                        <Plus size={20} />
-                        <span>Nouveau Trajet</span>
-                    </button>
-                </header>
-
-                {itineraries.length === 0 ? (
-                    <div className="empty-dashboard">
-                        <div className="empty-icon">
-                            <Map size={64} />
+                        <div className="create-card-content">
+                            <Plus size={48} />
+                            <span>Nouveau Trajet</span>
                         </div>
-                        <h2>Aucun itinéraire trouvé</h2>
-                        <p>Commencez par créer votre premier trajet personnalisé !</p>
-                        <button
-                            className="create-btn-large"
-                            onClick={() => {
-                                createNew();
-                                const { currentId } = useRouteStore.getState();
-                                if (currentId) navigate(`/editor/${currentId}`);
-                            }}
-                        >
-                            <Plus size={20} />
-                            <span>Créer mon premier itinéraire</span>
-                        </button>
-                    </div>
-                ) : (
-                    <div className="itinerary-grid">
-                        {itineraries.map((itinerary) => {
-                            const waypointCount = itinerary.waypoints.length;
-                            return (
-                                <div key={itinerary.id} className="itinerary-card">
-                                    <div className="card-header">
-                                        <div className="card-icon">
-                                            <Navigation size={20} />
-                                        </div>
-                                        <div className="card-actions">
-                                            <button
-                                                className="card-action-btn delete"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (confirm('Voulez-vous vraiment supprimer cet itinéraire ?')) {
-                                                        deleteItinerary(itinerary.id);
-                                                    }
-                                                }}
-                                                title="Supprimer"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className="card-body"
-                                        onClick={() => {
-                                            openItinerary(itinerary.id);
-                                            navigate(`/editor/${itinerary.id}`);
-                                        }}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
-                                    >
-                                        <h3 className="itinerary-name">{itinerary.name}</h3>
-
-                                        <div className="itinerary-meta">
-                                            <div className="meta-item">
-                                                <Calendar size={14} />
-                                                <span>{formatDate(itinerary.lastModified)}</span>
-                                            </div>
-                                            <div className="meta-item">
-                                                <Map size={14} />
-                                                <span>{waypointCount} {waypointCount > 1 ? 'étapes' : 'étape'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className="card-footer"
-                                        onClick={() => {
-                                            openItinerary(itinerary.id);
-                                            navigate(`/editor/${itinerary.id}`);
-                                        }}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
-                                    >
-                                        <button className="edit-link" tabIndex={-1}>
-                                            <Edit3 size={16} />
-                                            Modifier
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                    </button>
+                </div>
             </div>
             <div className="dashboard-illustration-container">
                 <img src={vanIllustration} alt="" className="van-illustration" />
