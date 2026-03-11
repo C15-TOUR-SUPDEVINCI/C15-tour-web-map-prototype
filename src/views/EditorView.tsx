@@ -22,12 +22,14 @@ export default function EditorView() {
   useEffect(() => {
     if (id && itineraries.length > 0) {
       const exists = itineraries.some(it => it.id === id);
-      if (exists) {
+      const isNew = id === currentId;
+      
+      if (exists || isNew) {
         if (currentId !== id) {
           openItinerary(id);
         }
       } else {
-        // Rediriger si l'ID n'existe pas
+        // Rediriger si l'ID n'existe pas et n'est pas le trajet en cours de création
         navigate('/dashboard');
       }
     }
