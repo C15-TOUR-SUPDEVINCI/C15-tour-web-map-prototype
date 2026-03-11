@@ -1,4 +1,4 @@
-.login-container {
+.signup-container {
     height: 100vh;
     background-color: #fce7f3;
     background-image: radial-gradient(var(--primary-rose-alpha-10) 1px, transparent 1px);
@@ -11,29 +11,29 @@
     scrollbar-color: var(--primary-rose-alpha-20) rgba(187, 72, 124, 0.05);
 }
 
-.login-container::-webkit-scrollbar {
+.signup-container::-webkit-scrollbar {
     width: 10px;
 }
 
-.login-container::-webkit-scrollbar-track {
+.signup-container::-webkit-scrollbar-track {
     background: rgba(187, 72, 124, 0.05);
     border-radius: 10px;
 }
 
-.login-container::-webkit-scrollbar-thumb {
+.signup-container::-webkit-scrollbar-thumb {
     background: var(--primary-rose-alpha-20);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 
-.login-container::-webkit-scrollbar-thumb:hover {
+.signup-container::-webkit-scrollbar-thumb:hover {
     background: var(--primary-rose);
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 
-.login-container::before {
+.signup-container::before {
     content: "";
     position: fixed;
     top: 0;
@@ -51,28 +51,34 @@
     pointer-events: none;
 }
 
-.login-wrapper {
+.signup-wrapper {
     max-width: 520px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
 }
 
-.login-header {
+.signup-header {
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 2rem;
 }
 
-.login-logo {
+.signup-logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.signup-logo {
     height: 120px;
     width: auto;
     object-fit: contain;
     filter: drop-shadow(0 4px 12px rgba(187, 72, 124, 0.2));
 }
 
-.login-card {
+.signup-card {
     background: var(--bg-glass);
     backdrop-filter: blur(var(--blur-amount));
     -webkit-backdrop-filter: blur(var(--blur-amount));
@@ -82,11 +88,11 @@
     padding: 2rem;
 }
 
-.login-card-header {
+.signup-card-header {
     margin-bottom: 1.75rem;
 }
 
-.login-title {
+.signup-title {
     font-size: 2rem;
     font-weight: 900;
     color: var(--text-main);
@@ -94,44 +100,44 @@
     line-height: 1.1;
 }
 
-.login-subtitle {
+.signup-subtitle {
     margin-top: 0.75rem;
     color: var(--text-muted);
     font-size: 1rem;
 }
 
-.login-form {
+.signup-form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.login-field {
+.signup-field {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.login-label {
+.signup-label {
     font-weight: 800;
     color: var(--text-main);
     font-size: 0.95rem;
 }
 
-.login-input {
+.signup-input {
     border: 2px solid rgba(187, 72, 124, 0.2) !important;
     border-radius: var(--radius-md) !important;
 }
 
-.login-input:focus-visible {
+.signup-input:focus-visible {
     box-shadow: 0 0 0 4px rgba(187, 72, 124, 0.18) !important;
 }
 
-.login-actions {
+.signup-actions {
     margin-top: 0.5rem;
 }
 
-.login-submit {
+.signup-submit {
     width: 100%;
     background-color: var(--primary-rose) !important;
     border-radius: var(--radius-lg) !important;
@@ -142,19 +148,30 @@
     box-shadow: var(--shadow-rose) !important;
 }
 
-.login-submit:hover {
+.signup-submit:hover {
     background-color: var(--primary-rose-dark) !important;
     transform: translateY(-2px);
 }
 
-.login-help {
+.signup-help {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
     margin-top: 1.25rem;
 }
 
-.login-link {
+.signup-error {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(220, 38, 38, 0.25);
+    background: rgba(220, 38, 38, 0.08);
+    color: #991b1b;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.signup-link {
     background: transparent;
     border: none;
     padding: 0;
@@ -165,11 +182,11 @@
     text-underline-offset: 3px;
 }
 
-.login-link:hover {
+.signup-link:hover {
     color: var(--primary-rose-dark);
 }
 
-.login-illustration-container {
+.signup-illustration-container {
     position: fixed;
     bottom: -40px;
     right: -40px;
@@ -178,22 +195,32 @@
     opacity: 0.15;
 }
 
-.login-illustration {
-    width: 700px;
+.signup-illustration {
+    width: 760px;
     height: auto;
     filter: drop-shadow(0 0 30px rgba(187, 72, 124, 0.1));
 }
 
 @media (max-width: 640px) {
-    .login-container {
+    .signup-container {
         padding: 2.5rem 1rem 4rem;
     }
 
-    .login-card {
+    .signup-card {
         padding: 1.5rem;
     }
 
-    .login-help {
+    .signup-illustration-container {
+        opacity: 0.1;
+        bottom: -80px;
+        right: -120px;
+    }
+
+    .signup-illustration {
+        width: 520px;
+    }
+
+    .signup-help {
         flex-direction: column;
         align-items: flex-start;
     }
