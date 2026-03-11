@@ -47,6 +47,16 @@ export function GroupManager() {
                 </button>
             </div>
 
+            <div className="group-adding-button">
+                <button
+                    className="icon-button primary"
+                    onClick={() => setIsAdding(true)}
+                    title="Ajouter un groupe"
+                >
+                    <Plus size={18} />
+                </button>
+            </div>
+
             {isAdding && (
                 <div className="group-edit-row">
                     <input

@@ -110,3 +110,105 @@
   border-radius: 8px;
   font-style: italic;
 }
+
+/* --- Styles pour la gestion des groupes --- */
+
+.add-group-section {
+  margin-bottom: 24px;
+  padding: 4px;
+}
+
+.add-group-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: var(--primary-rose-alpha-10);
+  border: 2px dashed var(--primary-rose-alpha-20);
+  border-radius: 12px;
+  color: var(--primary-rose);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-group-btn:hover {
+  background: var(--primary-rose-alpha-20);
+  border-color: var(--primary-rose);
+  transform: translateY(-2px);
+}
+
+.group-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  animation: slideDown 0.2s ease-out;
+}
+
+.group-edit-row.full-width {
+  flex: 1;
+}
+
+.group-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid var(--primary-rose-alpha-20);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.group-input:focus {
+  border-color: var(--primary-rose);
+}
+
+.group-header-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.group-section-header:hover .group-header-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  padding: 4px;
+  background: transparent;
+  color: #64748b;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f1f5f9;
+  color: var(--primary-rose);
+}
+
+.action-btn.danger:hover {
+  color: #ef4444;
+}
+
+.icon-button.success {
+  color: #22c55e;
+}
+
+.icon-button.danger {
+  color: #ef4444;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
