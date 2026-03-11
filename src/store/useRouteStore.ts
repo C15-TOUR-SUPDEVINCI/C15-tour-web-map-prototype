@@ -7,9 +7,6 @@ import type { RoutePayload } from '../domain/route.types';
 import type { Itinerary } from '../domain/itinerary.types';
 
 interface RouteStore {
-  // Vue actuelle
-  view: 'dashboard' | 'editor';
-
   // Itinéraire en cours d'édition
   currentId: string | null;
   routeName: string;
@@ -26,7 +23,6 @@ interface RouteStore {
   routeDuration: number | null;
 
   // Actions
-  setView: (view: 'dashboard' | 'editor') => void;
   setRouteName: (name: string) => void;
 
   // Itinéraires
@@ -69,7 +65,6 @@ export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
 };
 
 export const useRouteStore = create<RouteStore>((set, get) => ({
-  view: 'dashboard',
   currentId: null,
   routeName: 'Nouveau trajet',
   waypoints: [],
@@ -79,8 +74,6 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   routeLegs: [],
   routeDistance: null,
   routeDuration: null,
-
-  setView: (view) => set({ view }),
 
   // Charge tous les itinéraires depuis le localStorage
   loadAll: () => {
@@ -96,7 +89,6 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
   createNew: () => {
     set({
-      view: 'editor',
       currentId: uuidv4(),
       routeName: 'Nouveau trajet',
       waypoints: [],
@@ -121,7 +113,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     };
 
     const existingIndex = itineraries.findIndex((it) => it.id === currentId);
-    let nextItineraries = [...itineraries];
+    const nextItineraries = [...itineraries];
 
     if (existingIndex >= 0) {
       nextItineraries[existingIndex] = currentItinerary;
@@ -138,7 +130,6 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     const itinerary = itineraries.find((it) => it.id === id);
     if (itinerary) {
       set({
-        view: 'editor',
         currentId: itinerary.id,
         routeName: itinerary.name,
         waypoints: itinerary.waypoints,
@@ -160,7 +151,16 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
   exitEditor: () => {
     get().saveCurrent();
-    set({ view: 'dashboard' });
+    set({
+      currentId: null,
+      routeName: 'Nouveau trajet',
+      waypoints: [],
+      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+      routeCoordinates: [],
+      routeLegs: [],
+      routeDistance: null,
+      routeDuration: null,
+    });
   },
 
   setRouteName: (name) => {
@@ -223,7 +223,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
     if (activeIndex === -1) return;
 
-    let nextWaypoints = [...waypoints];
+    const nextWaypoints = [...waypoints];
     const [movedWaypoint] = nextWaypoints.splice(activeIndex, 1);
 
     // Change de groupe si on drop dans un autre groupe

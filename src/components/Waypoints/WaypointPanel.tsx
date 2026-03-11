@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
+import { useNavigate } from 'react-router-dom';
 import { WaypointList } from './WaypointList';
 import { RouteStats } from './RouteStats';
 import { GroupManager } from './GroupManager/GroupManager';
@@ -9,6 +10,7 @@ import { Download, ChevronDown, ChevronUp, Save, X, Pencil } from 'lucide-react'
 import './WaypointPanel.css';
 
 export function WaypointPanel() {
+  const navigate = useNavigate();
   const routeName = useRouteStore((state) => state.routeName);
   const setRouteName = useRouteStore((state) => state.setRouteName);
   const generatePayload = useRouteStore((state) => state.generatePayload);
@@ -38,7 +40,14 @@ export function WaypointPanel() {
       <div className="waypoint-panel">
         <header className="panel-header">
           <div className="header-close-row">
-            <button className="header-icon-btn btn-rose-outline danger" onClick={exitEditor} title="Quitter">
+            <button
+              className="header-icon-btn btn-rose-outline danger"
+              onClick={() => {
+                exitEditor();
+                navigate('/dashboard');
+              }}
+              title="Quitter"
+            >
               <X size={20} />
             </button>
           </div>

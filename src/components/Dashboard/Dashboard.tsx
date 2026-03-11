@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { Plus, Map, Calendar, Trash2, Edit3, Navigation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 import vanIllustration from '../../assets/van-illustration.png';
 
 export function Dashboard() {
+    const navigate = useNavigate();
     const itineraries = useRouteStore((state) => state.itineraries);
     const loadAll = useRouteStore((state) => state.loadAll);
     const createNew = useRouteStore((state) => state.createNew);
@@ -29,6 +31,7 @@ export function Dashboard() {
     const handleCardKeyDown = (e: React.KeyboardEvent, id: string) => {
         if (e.key === 'Enter' || e.key === ' ') {
             openItinerary(id);
+            navigate('/editor');
         }
     };
 
@@ -41,7 +44,13 @@ export function Dashboard() {
                             <img src={logoImg} alt="Tour 95!" className="dashboard-logo" />
                         </div>
                     </div>
-                    <button className="create-btn" onClick={createNew}>
+                    <button
+                        className="create-btn"
+                        onClick={() => {
+                            createNew();
+                            navigate('/editor');
+                        }}
+                    >
                         <Plus size={20} />
                         <span>Nouveau Trajet</span>
                     </button>
@@ -54,7 +63,13 @@ export function Dashboard() {
                         </div>
                         <h2>Aucun itinéraire trouvé</h2>
                         <p>Commencez par créer votre premier trajet personnalisé !</p>
-                        <button className="create-btn-large" onClick={createNew}>
+                        <button
+                            className="create-btn-large"
+                            onClick={() => {
+                                createNew();
+                                navigate('/editor');
+                            }}
+                        >
                             <Plus size={20} />
                             <span>Créer mon premier itinéraire</span>
                         </button>
@@ -87,7 +102,10 @@ export function Dashboard() {
 
                                     <div
                                         className="card-body"
-                                        onClick={() => openItinerary(itinerary.id)}
+                                        onClick={() => {
+                                            openItinerary(itinerary.id);
+                                            navigate('/editor');
+                                        }}
                                         role="button"
                                         tabIndex={0}
                                         onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
@@ -108,7 +126,10 @@ export function Dashboard() {
 
                                     <div
                                         className="card-footer"
-                                        onClick={() => openItinerary(itinerary.id)}
+                                        onClick={() => {
+                                            openItinerary(itinerary.id);
+                                            navigate('/editor');
+                                        }}
                                         role="button"
                                         tabIndex={0}
                                         onKeyDown={(e) => handleCardKeyDown(e, itinerary.id)}
