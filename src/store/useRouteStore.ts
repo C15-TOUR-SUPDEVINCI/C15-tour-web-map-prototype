@@ -177,6 +177,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       lat,
       lng,
       label,
+      name: '', // Initialiser avec un nom vide
       order: waypoints.length + 1,
       type: type ?? "EXTREMITY",
       groupId: targetGroupId,
@@ -195,10 +196,10 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set({ waypoints: recalcWaypointsTypes(updatedWaypoints) });
   },
 
-  updateWaypointLabel: (id, label) => {
+  updateWaypointLabel: (id, name) => {
     set((state) => ({
       waypoints: state.waypoints.map((wp) =>
-        wp.id === id ? { ...wp, label } : wp
+        wp.id === id ? { ...wp, name } : wp
       ),
     }));
   },
@@ -310,6 +311,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         lat: wp.lat,
         lng: wp.lng,
         label: wp.label,
+        name: wp.name,
         order: wp.order,
         type: wp.type,
         groupId: wp.groupId,

@@ -74,7 +74,11 @@ export default function Login() {
                     </form>
 
                     <div className="login-help">
-                        <button className="login-link" type="button">
+                        <button 
+                            className="login-link" 
+                            type="button"
+                            onClick={() => navigate('/forgot-password')}
+                        >
                             Mot de passe oublié ?
                         </button>
                         <button className="login-link" type="button">

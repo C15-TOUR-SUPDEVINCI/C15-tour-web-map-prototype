@@ -55,7 +55,7 @@
 }
 
 .waypoint-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   /* Plus compact */
   font-weight: 700;
   color: var(--primary-rose);
@@ -67,12 +67,44 @@
   white-space: nowrap;
 }
 
+.waypoint-info {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.waypoint-info:hover {
+  opacity: 0.8;
+}
+
+.waypoint-address {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.3;
+  margin-top: 0.15rem;
+  word-break: break-word;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.waypoint-address.active {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  display: block;
+}
+
 .waypoint-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   /* Espacement réduit entre les boutons */
   flex-shrink: 0;
+  align-self: flex-start;
+  padding-top: 0.25rem;
 }
 
 .item-action-btn,

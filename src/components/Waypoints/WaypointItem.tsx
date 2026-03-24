@@ -32,18 +32,20 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   const waypoints = useRouteStore((state) => state.waypoints);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editLabel, setEditLabel] = useState(waypoint.label);
+  const [editLabel, setEditLabel] = useState(waypoint.name || '');
 
   const isFirst = waypoint.order === 1;
   const isLast = waypoint.order === waypoints.length;
 
-  let displayTitle = waypoint.label;
-  if (isFirst) {
-    displayTitle = 'DÉPART';
-  } else if (isLast) {
-    displayTitle = 'ARRIVÉE';
-  } else {
-    displayTitle = `Étape ${waypoint.order}`;
+  let displayTitle = waypoint.name || '';
+  if (!displayTitle) {
+    if (isFirst) {
+      displayTitle = 'DÉPART';
+    } else if (isLast) {
+      displayTitle = 'ARRIVÉE';
+    } else {
+      displayTitle = `Étape ${waypoint.order}`;
+    }
   }
 
   const handleSaveLabel = () => {
@@ -65,6 +67,7 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+  const [isExpanded, setIsExpanded] = useState(false);
   const totalWaypoints = waypoints.length;
 
   return (
@@ -95,8 +98,21 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
             )}
           </div>
 
-          <div className="waypoint-info">
-            <div className="waypoint-address">{waypoint.label}</div>
+          <div 
+            className={`waypoint-info ${isExpanded ? 'expanded' : ''}`}
+            onClick={() => setIsExpanded(!isExpanded)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsExpanded(!isExpanded);
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            title={isExpanded ? "Réduire l'adresse" : "Afficher l'adresse complète"}
+            aria-expanded={isExpanded}
+          >
+            <div className={`waypoint-address ${isExpanded ? 'active' : ''}`}>{waypoint.label}</div>
           </div>
         </div>
 
