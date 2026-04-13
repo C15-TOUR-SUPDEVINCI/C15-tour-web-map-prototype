@@ -1,16 +1,13 @@
 .dashboard-container {
-    height: 100vh;
+    min-height: 100vh;
     background-color: #fce7f3;
     /* Fond rose clair */
     background-image: radial-gradient(var(--primary-rose-alpha-10) 1px, transparent 1px);
     background-size: 20px 20px;
-    padding: 4rem 2rem 6rem;
+    padding: 8rem 2rem 6rem; /* Augmentation du padding top pour la navbar fixe */
     color: var(--text-main);
     position: relative;
     overflow-y: auto;
-    /* Firefox scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-rose-alpha-20) rgba(187, 72, 124, 0.05);
 }
 
 /* Chrome/Safari scrollbar */
@@ -60,33 +57,95 @@
     z-index: 1;
 }
 
-.dashboard-header {
+.dashboard-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-content {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4rem;
 }
 
-.dashboard-logo-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.dashboard-logo {
-    height: 120px;
+.navbar-logo {
+    height: 45px;
     width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 12px rgba(187, 72, 124, 0.2));
+    filter: drop-shadow(0 2px 4px rgba(187, 72, 124, 0.1));
 }
 
-.dashboard-subtitle {
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #f8fafc; /* Gris très clair */
+    color: var(--text-main);
+    border: 1px solid #e2e8f0;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-action-btn:hover {
+    background: white;
+    border-color: var(--primary-rose);
     color: var(--primary-rose);
-    font-size: 1.25rem;
-    font-weight: 800;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.nav-action-btn.logout {
+    padding: 0.6rem;
+    color: var(--text-muted);
+}
+
+.nav-action-btn.logout:hover {
+    color: #ef4444;
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.dashboard-header {
+    margin-bottom: 3rem;
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--text-main);
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+}
+
+.dashboard-description {
+    color: var(--text-muted);
+    font-size: 1.1rem;
     margin: 0;
-    letter-spacing: 0.1em;
-    opacity: 0.7;
 }
 
 .dashboard-illustration-container {
@@ -107,197 +166,153 @@
 
 /* Les styles de create-btn ont été remplacés par create-card */
 
-.itinerary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 2.5rem;
+.itinerary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
 }
 
-.itinerary-card {
+.itinerary-row {
     background: var(--bg-glass);
     backdrop-filter: blur(var(--blur-amount));
     -webkit-backdrop-filter: blur(var(--blur-amount));
-    border-radius: var(--radius-xl);
-    border: 2px solid white;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: var(--radius-lg);
+    border: 1px solid white;
+    padding: 1rem 1.5rem;
     display: flex;
-    flex-direction: column;
-    box-shadow: var(--shadow-soft);
-}
-
-.itinerary-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 30px 40px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-rose-alpha-20);
-}
-
-.card-header {
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
 }
 
-.card-icon {
-    width: 48px;
-    height: 48px;
+.itinerary-row:hover {
+    transform: translateX(8px);
+    background: white;
+    border-color: var(--primary-rose-alpha-20);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.row-icon {
+    width: 45px;
+    height: 45px;
     background: var(--primary-rose-alpha-10);
     color: var(--primary-rose);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
-.card-action-btn {
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 0.6rem;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text-muted);
-}
-
-.card-action-btn.delete:hover {
-    background: #fff1f2;
-    color: #e11d48;
-    border-color: #fecdd3;
-}
-
-.card-body {
-    padding: 0 1.5rem 2rem;
+.row-main {
     flex: 1;
-    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .itinerary-name {
-    font-size: 1.5rem;
-    font-weight: 900;
+    font-size: 1.2rem;
+    font-weight: 800;
     color: var(--text-main);
-    margin: 0 0 1rem 0;
-    line-height: 1.2;
+    margin: 0;
 }
 
-.itinerary-meta {
+.itinerary-meta-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: 1.5rem;
 }
 
 .meta-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     color: var(--text-muted);
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
 }
 
-.card-footer {
-    background: rgba(187, 72, 124, 0.05);
-    padding: 1.25rem 1.5rem;
-    border-top: 1px solid var(--primary-rose-alpha-10);
-    cursor: pointer;
+.row-actions {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    gap: 1rem;
 }
 
-.edit-link {
+.row-action-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--primary-rose);
-    font-weight: 800;
-    font-size: 1rem;
-    background: transparent;
-    border: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    padding: 0;
+    transition: all 0.2s;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-main);
+}
+
+.row-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.row-action-btn.edit {
+    color: var(--primary-rose);
+}
+
+.row-action-btn.edit:hover {
+    background: var(--primary-rose);
+    color: white;
+    border-color: var(--primary-rose);
+}
+
+.row-action-btn.delete {
+    padding: 0.5rem;
+    color: var(--text-muted);
+}
+
+.row-action-btn.delete:hover {
+    color: #ef4444;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* Styles pour le bouton de création au format ligne */
+.create-row {
+    background: white;
+    border: 2px dashed var(--primary-rose-alpha-20);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    color: var(--primary-rose);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: center;
+}
+
+.create-row:hover {
+    border-style: solid;
+    border-color: var(--primary-rose);
+    background: var(--primary-rose-alpha-5);
+    transform: translateY(-2px);
+}
+
+.create-row-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    transition: all 0.2s;
 }
 
-.edit-link:hover {
-    color: var(--primary-rose-dark);
-    transform: translateX(4px);
-}
-
-/* Quand il n'y a pas encore d'itinéraire */
-.empty-dashboard {
-    text-align: center;
-    padding: 8rem 2rem;
-    background: var(--bg-glass);
-    backdrop-filter: blur(var(--blur-amount));
-    border-radius: var(--radius-xl);
-    border: 3px dashed var(--primary-rose-alpha-20);
-}
-
-.empty-icon {
-    width: 140px;
-    height: 140px;
-    background: var(--primary-rose-alpha-10);
-    color: var(--primary-rose-light);
-    border-radius: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 2.5rem;
-    box-shadow: inset 0 0 20px rgba(187, 72, 124, 0.05);
-}
-
-.empty-dashboard h2 {
-    font-size: 2.25rem;
-    font-weight: 900;
-    color: var(--text-main);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-}
-
-.empty-dashboard p {
-    color: var(--text-muted);
-    font-size: 1.25rem;
-    margin-bottom: 3rem;
-}
-
-/* .create-btn-large a été supprimée suite au passage à la grille */
-
-.create-card {
-    background: var(--primary-rose);
-    border-radius: var(--radius-xl);
-    border: 2px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    min-height: 280px;
-    padding: 2rem;
-    color: white;
-    box-shadow: var(--shadow-rose);
-}
-
-.create-card:hover {
-    transform: translateY(-12px);
-    background: var(--primary-rose-dark);
-    box-shadow: 0 30px 40px rgba(187, 72, 124, 0.3);
-}
-
-.create-card-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.create-card-content span {
-    font-size: 1.25rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
+/* Nettoyage des anciens styles de cartes */
 
 @media (max-width: 640px) {
     .dashboard-header {
