@@ -3,15 +3,21 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
+import { Eye, EyeOff } from 'lucide-react';
 import './Signup.css';
 import logoImg from '../assets/logo-tour95.png';
 import vanIllustration from '../assets/van-illustration.png';
 
 export default function Signup() {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     return (
@@ -31,7 +37,7 @@ export default function Signup() {
 
                     <form
                         className="signup-form"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
 
                             if (password !== confirmPassword) {
@@ -39,10 +45,65 @@ export default function Signup() {
                                 return;
                             }
 
+                            setLoading(true);
                             setErrorMessage('');
-                            navigate('/dashboard');
+
+                            try {
+                                const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
+                                const response = await fetch('https://c15-tour-back.vercel.app/api/users', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    if (response.status === 401) {
+                                        throw new Error("L'API refuse la création sans être déjà connecté (401). Demandez une route d'inscription publique.");
+                                    }
+                                    throw new Error(errorData.message || "Erreur lors de l'inscription");
+                                }
+
+                                navigate('/login');
+                            } catch (err: any) {
+                                setErrorMessage(err.message || 'Une erreur est survenue.');
+                            } finally {
+                                setLoading(false);
+                            }
                         }}
                     >
+                        <div className="signup-field">
+                            <label className="signup-label" htmlFor="firstName">
+                                Prénom
+                            </label>
+                            <Input
+                                id="firstName"
+                                name="firstName"
+                                type="text"
+                                placeholder="ex: Maxime"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                className="signup-input"
+                                required
+                            />
+                        </div>
+
+                        <div className="signup-field">
+                            <label className="signup-label" htmlFor="lastName">
+                                Nom
+                            </label>
+                            <Input
+                                id="lastName"
+                                name="lastName"
+                                type="text"
+                                placeholder="ex: Dupont"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                className="signup-input"
+                                required
+                            />
+                        </div>
+
                         <div className="signup-field">
                             <label className="signup-label" htmlFor="email">
                                 Email
@@ -59,41 +120,57 @@ export default function Signup() {
                             />
                         </div>
 
-                        <div className="signup-field">
+                        <div className="signup-field" style={{ position: 'relative' }}>
                             <label className="signup-label" htmlFor="password">
                                 Mot de passe
                             </label>
                             <Input
                                 id="password"
                                 name="password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="signup-input"
                             />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{ position: 'absolute', right: '12px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0 }}
+                                aria-label={showPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
                         </div>
 
-                        <div className="signup-field">
+                        <div className="signup-field" style={{ position: 'relative' }}>
                             <label className="signup-label" htmlFor="confirmPassword">
                                 Confirmer le mot de passe
                             </label>
                             <Input
                                 id="confirmPassword"
                                 name="confirmPassword"
-                                type="password"
+                                type={showConfirmPassword ? "text" : "password"}
                                 autoComplete="new-password"
                                 placeholder="••••••••"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="signup-input"
                             />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                style={{ position: 'absolute', right: '12px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0 }}
+                                aria-label={showConfirmPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
+                            >
+                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
                         </div>
 
                         <div className="signup-actions">
-                            <Button className="signup-submit" type="submit">
-                                S'inscrire
+                            <Button className="signup-submit" type="submit" disabled={loading}>
+                                {loading ? 'Création en cours...' : "S'inscrire"}
                             </Button>
                         </div>
                     </form>
