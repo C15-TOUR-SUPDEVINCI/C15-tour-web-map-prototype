@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import './ResetPassword.css';
+import logoImg from '../assets/logo-tour95.png';
 
 
 export default function ResetPassword() {
@@ -12,11 +13,11 @@ export default function ResetPassword() {
     return (
         <div className="reset-password-container">
             <div className="reset-password-wrapper">
-                {/* <header className="reset-password-header">
+                <header className="reset-password-header">
                     <div className="reset-password-logo-container">
                         <img src={logoImg} alt="Tour 95!" className="reset-password-logo" />
                     </div>
-                </header> */}
+                </header>
 
                 <div className="reset-password-card">
                     <div className="reset-password-card-header">
