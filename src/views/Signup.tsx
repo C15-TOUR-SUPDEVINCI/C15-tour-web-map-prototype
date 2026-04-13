@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import { Eye, EyeOff } from 'lucide-react';
@@ -19,6 +20,7 @@ export default function Signup() {
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const token = useAuthStore((state) => state.token);
 
     return (
         <div className="signup-container">
@@ -31,8 +33,8 @@ export default function Signup() {
 
                 <div className="signup-card">
                     <div className="signup-card-header">
-                        <h1 className="signup-title">Inscription</h1>
-                        <p className="signup-subtitle">Crée ton compte pour accéder à ton espace et gérer tes trajets.</p>
+                        <h1 className="signup-title">Nouvel Utilisateur</h1>
+                        <p className="signup-subtitle">Créez un compte pour un nouvel organisateur / administrateur.</p>
                     </div>
 
                     <form
@@ -52,7 +54,10 @@ export default function Signup() {
                                 const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
                                 const response = await fetch('https://c15-tour-back.vercel.app/api/users', {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
                                     body: JSON.stringify(payload)
                                 });
 
@@ -64,7 +69,8 @@ export default function Signup() {
                                     throw new Error(errorData.message || "Erreur lors de l'inscription");
                                 }
 
-                                navigate('/login');
+                                alert('Utilisateur créé avec succès !');
+                                navigate('/dashboard');
                             } catch (err: any) {
                                 setErrorMessage(err.message || 'Une erreur est survenue.');
                             } finally {
@@ -178,8 +184,12 @@ export default function Signup() {
                     {errorMessage ? <p className="signup-error">{errorMessage}</p> : null}
 
                     <div className="signup-help">
-                        <button className="signup-link" type="button">
-                            Déjà un compte ? Se connecter
+                        <button 
+                            className="signup-link" 
+                            type="button"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Retour au Dashboard
                         </button>
                     </div>
                 </div>

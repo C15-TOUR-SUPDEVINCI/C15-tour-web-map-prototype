@@ -117,9 +117,6 @@ export default function Login() {
                         <button className="login-link" type="button">
                             Mot de passe oublié ?
                         </button>
-                        <button className="login-link" type="button">
-                            Créer un compte
-                        </button>
                     </div>
                 </div>
             </div>

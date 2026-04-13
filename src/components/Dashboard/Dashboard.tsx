@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
-import { Plus, Map, Calendar, Trash2, Edit3, Navigation } from 'lucide-react';
+import { Plus, Map, Calendar, Trash2, Edit3, Navigation, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
@@ -43,6 +43,14 @@ export function Dashboard() {
                         <div className="dashboard-logo-container">
                             <img src={logoImg} alt="Tour 95!" className="dashboard-logo" />
                         </div>
+                        <button 
+                            className="admin-action-btn"
+                            onClick={() => navigate('/signup')}
+                            title="Créer un nouvel utilisateur"
+                        >
+                            <UserPlus size={18} />
+                            <span>Utilisateurs</span>
+                        </button>
                     </div>
                 </header>
 
