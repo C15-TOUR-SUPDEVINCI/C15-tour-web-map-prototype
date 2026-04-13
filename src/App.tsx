@@ -3,6 +3,7 @@ import EditorView from './views/EditorView';
 import Login from './views/Login';
 import Signup from './views/Signup';
 import ResetPassword from './views/ResetPassword';
+import NewPassword from './views/NewPassword';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 
@@ -17,6 +18,7 @@ function App() {
       <Route path="/editor" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/new-password" element={<NewPassword />} />
     </Routes>
   );
 }
