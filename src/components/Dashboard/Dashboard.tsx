@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
-import { Plus, Map, Calendar, Trash2, Edit3, Navigation, UserPlus } from 'lucide-react';
+import { useAuthStore } from '../../store/useAuthStore';
+import { Plus, Map, Calendar, Trash2, Edit3, Navigation, UserPlus, UploadCloud, Loader2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { publishItinerary } from '../../services/api.service';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 import vanIllustration from '../../assets/van-illustration.png';
@@ -13,6 +15,35 @@ export function Dashboard() {
     const createNew = useRouteStore((state) => state.createNew);
     const openItinerary = useRouteStore((state) => state.openItinerary);
     const deleteItinerary = useRouteStore((state) => state.deleteItinerary);
+
+    const token = useAuthStore((state) => state.token);
+    const user = useAuthStore((state) => state.user);
+    const logout = useAuthStore((state) => state.logout);
+    
+    const [isPublishing, setIsPublishing] = useState<string | null>(null);
+
+    const handlePublish = async (itinerary: any) => {
+        if (!token) {
+            alert("Vous devez être connecté pour publier un itinéraire.");
+            return;
+        }
+
+        setIsPublishing(itinerary.id);
+        try {
+            // L'API demande le userId (organizer), on utilise l'ID du user connecté récupéré lors du login
+            if (!user?.id) {
+                throw new Error("ID utilisateur manquant. Merci de vous déconnecter et de vous reconnecter pour rafraîchir votre profil.");
+            }
+            
+            await publishItinerary(token, itinerary, user.id);
+            alert("✅ Itinéraire publié avec succès !");
+        } catch (error: any) {
+            console.error("Erreur de publication", error);
+            alert(`❌ Erreur lors de la publication : ${error.message}`);
+        } finally {
+            setIsPublishing(null);
+        }
+    };
 
     useEffect(() => {
         loadAll();
@@ -51,6 +82,17 @@ export function Dashboard() {
                             <UserPlus size={18} />
                             <span>Utilisateurs</span>
                         </button>
+                        <button 
+                            className="admin-action-btn logout"
+                            onClick={() => {
+                                logout();
+                                navigate('/login');
+                            }}
+                            title="Se déconnecter"
+                        >
+                            <LogOut size={18} />
+                            <span>Déconnexion</span>
+                        </button>
                     </div>
                 </header>
 
@@ -64,6 +106,21 @@ export function Dashboard() {
                                         <Navigation size={20} />
                                     </div>
                                     <div className="card-actions">
+                                        <button
+                                            className="card-action-btn publish"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePublish(itinerary);
+                                            }}
+                                            title="Publier sur le serveur"
+                                            disabled={isPublishing === itinerary.id}
+                                        >
+                                            {isPublishing === itinerary.id ? (
+                                                <Loader2 size={16} className="spin" />
+                                            ) : (
+                                                <UploadCloud size={16} />
+                                            )}
+                                        </button>
                                         <button
                                             className="card-action-btn delete"
                                             onClick={(e) => {

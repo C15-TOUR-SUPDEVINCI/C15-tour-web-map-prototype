@@ -53,8 +53,20 @@ export default function Login() {
 
                                 const data = await response.json();
                                 const token = data.access_token || data.token;
+                                
                                 if (token) {
-                                    login(token);
+                                    // RECHERCHE : Récupérer le profile pour avoir l'ID réel de l'utilisateur
+                                    const profileRes = await fetch('https://c15-tour-back.vercel.app/api/auth/profile', {
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    
+                                    if (profileRes.ok) {
+                                        const userProfile = await profileRes.json();
+                                        login(token, userProfile);
+                                    } else {
+                                        // Fallback basique
+                                        login(token);
+                                    }
                                 }
                                 navigate('/dashboard');
                             } catch (err: any) {

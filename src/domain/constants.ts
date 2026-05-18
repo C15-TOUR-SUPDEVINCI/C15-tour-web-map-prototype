@@ -44,4 +44,5 @@ export const WAYPOINT_COLORS = {
   PASSAGE: '#bb487c',
   EXTREMITY: '#8e355d', // plus foncé pour départ/arrivée
   USER: '#d16b9a',
+  INTERET: '#facc15', // Jaune/Or pour les points d'intérêt
 };

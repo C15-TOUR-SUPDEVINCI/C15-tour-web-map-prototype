@@ -10,6 +10,10 @@ interface RouteStore {
   // Itinéraire en cours d'édition
   currentId: string | null;
   routeName: string;
+  routeDescription: string;
+  startDate: string;
+  endDate: string;
+  maxParticipants: number;
   waypoints: Waypoint[];
   groups: Group[];
 
@@ -22,8 +26,12 @@ interface RouteStore {
   routeDistance: number | null;
   routeDuration: number | null;
 
-  // Actions
+  // Actions (Globales)
   setRouteName: (name: string) => void;
+  setRouteDescription: (desc: string) => void;
+  setStartDate: (date: string) => void;
+  setEndDate: (date: string) => void;
+  setMaxParticipants: (max: number) => void;
 
   // Itinéraires
   loadAll: () => void;
@@ -38,6 +46,7 @@ interface RouteStore {
   removeWaypoint: (id: string) => void;
   updateWaypointLabel: (id: string, label: string) => void;
   updateWaypointAddress: (id: string, address: string) => void;
+  updateWaypointDetails: (id: string, updates: Partial<Waypoint>) => void; // NOUVEAU
   reorderWaypoints: (startIndex: number, endIndex: number) => void;
   moveWaypoint: (activeId: string, overId: string, overGroupId?: string) => void;
   clearWaypoints: () => void;
@@ -46,6 +55,7 @@ interface RouteStore {
   addGroup: (name: string) => void;
   removeGroup: (id: string) => void;
   updateGroup: (id: string, name: string) => void;
+  updateGroupDetails: (id: string, updates: Partial<Group>) => void; // NOUVEAU
   setWaypointGroup: (waypointId: string, groupId: string) => void;
 
   // Export
@@ -54,6 +64,10 @@ interface RouteStore {
 
 const DEFAULT_GROUP_ID = 'default-group';
 const STORAGE_KEY = 'c15-itineraries';
+
+// Helpers de date par défaut (Aujourd'hui et Demain)
+const getTodayStr = () => new Date().toISOString().slice(0, 16);
+const getTomorrowStr = () => new Date(Date.now() + 86400000).toISOString().slice(0, 16);
 
 // Met à jour les types des waypoints : premier et dernier = EXTREMITY, le reste = PASSAGE
 export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
@@ -68,8 +82,12 @@ export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
 export const useRouteStore = create<RouteStore>((set, get) => ({
   currentId: null,
   routeName: 'Nouveau trajet',
+  routeDescription: '',
+  startDate: getTodayStr(),
+  endDate: getTomorrowStr(),
+  maxParticipants: 50,
   waypoints: [],
-  groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+  groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
   itineraries: [],
   routeCoordinates: [],
   routeLegs: [],
@@ -92,8 +110,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set({
       currentId: uuidv4(),
       routeName: 'Nouveau trajet',
+      routeDescription: '',
+      startDate: getTodayStr(),
+      endDate: getTomorrowStr(),
+      maxParticipants: 50,
       waypoints: [],
-      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
       routeCoordinates: [],
       routeLegs: [],
       routeDistance: null,
@@ -102,12 +124,20 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   },
 
   saveCurrent: () => {
-    const { currentId, routeName, waypoints, groups, itineraries } = get();
+    const { 
+        currentId, routeName, routeDescription, startDate, endDate, maxParticipants, 
+        waypoints, groups, itineraries 
+    } = get();
+    
     if (!currentId) return;
 
     const currentItinerary: Itinerary = {
       id: currentId,
       name: routeName,
+      description: routeDescription,
+      startDate,
+      endDate,
+      maxParticipants,
       lastModified: new Date().toISOString(),
       waypoints,
       groups,
@@ -133,6 +163,10 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       set({
         currentId: itinerary.id,
         routeName: itinerary.name,
+        routeDescription: itinerary.description || '',
+        startDate: itinerary.startDate || getTodayStr(),
+        endDate: itinerary.endDate || getTomorrowStr(),
+        maxParticipants: itinerary.maxParticipants || 50,
         waypoints: itinerary.waypoints,
         groups: itinerary.groups,
         routeCoordinates: [], // recalculé par RouteCalculator
@@ -155,8 +189,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set({
       currentId: null,
       routeName: 'Nouveau trajet',
+      routeDescription: '',
+      startDate: getTodayStr(),
+      endDate: getTomorrowStr(),
+      maxParticipants: 50,
       waypoints: [],
-      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut' }],
+      groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
       routeCoordinates: [],
       routeLegs: [],
       routeDistance: null,
@@ -164,19 +202,23 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     });
   },
 
-  setRouteName: (name) => {
-    set({ routeName: name });
-  },
+  setRouteName: (name) => set({ routeName: name }),
+  setRouteDescription: (desc) => set({ routeDescription: desc }),
+  setStartDate: (date) => set({ startDate: date }),
+  setEndDate: (date) => set({ endDate: date }),
+  setMaxParticipants: (max) => set({ maxParticipants: max }),
 
   addWaypoint: (lat, lng, label, type) => {
     const { waypoints, groups } = get();
-    const targetGroupId = groups.at(-1)?.id || DEFAULT_GROUP_ID;
+    const targetGroupId = groups[groups.length - 1]?.id || DEFAULT_GROUP_ID;
 
     const newWaypoint: Waypoint = {
       id: uuidv4(),
       lat,
       lng,
       label,
+      description: '',
+      pauseDurationMinutes: 0,
       order: waypoints.length + 1,
       type: type ?? "EXTREMITY",
       groupId: targetGroupId,
@@ -206,7 +248,15 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   updateWaypointAddress: (id, address) => {
     set((state) => ({
       waypoints: state.waypoints.map((wp) =>
-        wp.id === id ? { ...wp, label: address } : wp
+        wp.id === id ? { ...wp, address } : wp // Modification ici: on sauve dans address plutôt que d'écraser le label
+      ),
+    }));
+  },
+
+  updateWaypointDetails: (id, updates) => {
+    set((state) => ({
+      waypoints: state.waypoints.map((wp) =>
+        wp.id === id ? { ...wp, ...updates } : wp
       ),
     }));
   },
@@ -266,7 +316,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   },
 
   addGroup: (name: string) => {
-    const newGroup: Group = { id: uuidv4(), name };
+    const newGroup: Group = { 
+        id: uuidv4(), 
+        name, 
+        routeType: 'MIXTE', 
+        difficultyLevel: 'MOYEN' 
+    };
     set((state) => ({ groups: [...state.groups, newGroup] }));
   },
 
@@ -291,6 +346,12 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     set((state) => ({
       groups: state.groups.map(g => g.id === id ? { ...g, name } : g)
     }));
+  },
+
+  updateGroupDetails: (id, updates) => {
+      set((state) => ({
+        groups: state.groups.map(g => g.id === id ? { ...g, ...updates } : g)
+      }));
   },
 
   setWaypointGroup: (waypointId: string, groupId: string) => {
