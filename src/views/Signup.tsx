@@ -54,7 +54,7 @@ export default function Signup() {
                                 const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
                                 const response = await fetch('https://c15-tour-back.vercel.app/api/users', {
                                     method: 'POST',
-                                    headers: { 
+                                    headers: {
                                         'Content-Type': 'application/json',
                                         'Authorization': `Bearer ${token}`
                                     },
@@ -86,7 +86,7 @@ export default function Signup() {
                                 id="firstName"
                                 name="firstName"
                                 type="text"
-                                placeholder="ex: Maxime"
+                                placeholder="Prénom"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 className="signup-input"
@@ -102,7 +102,7 @@ export default function Signup() {
                                 id="lastName"
                                 name="lastName"
                                 type="text"
-                                placeholder="ex: Dupont"
+                                placeholder="Nom"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 className="signup-input"
@@ -140,8 +140,8 @@ export default function Signup() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="signup-input"
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 style={{ position: 'absolute', right: '12px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0 }}
                                 aria-label={showPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
@@ -164,8 +164,8 @@ export default function Signup() {
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="signup-input"
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 style={{ position: 'absolute', right: '12px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0 }}
                                 aria-label={showConfirmPassword ? "Cacher le mot de passe" : "Afficher le mot de passe"}
@@ -184,8 +184,8 @@ export default function Signup() {
                     {errorMessage ? <p className="signup-error">{errorMessage}</p> : null}
 
                     <div className="signup-help">
-                        <button 
-                            className="signup-link" 
+                        <button
+                            className="signup-link"
                             type="button"
                             onClick={() => navigate('/dashboard')}
                         >
