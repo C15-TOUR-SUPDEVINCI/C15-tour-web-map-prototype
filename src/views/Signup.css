@@ -201,13 +201,59 @@
     filter: drop-shadow(0 0 30px rgba(187, 72, 124, 0.1));
 }
 
+/* ── Animations d'entrée ── */
+.signup-header {
+    animation: slideDownFadeIn 0.45s var(--easing-spring) both;
+}
+
+.signup-card {
+    animation: slideUpFadeIn 0.5s var(--easing-spring) 0.1s both;
+}
+
+.signup-logo {
+    animation: bounceIn 0.6s var(--easing-spring) both;
+}
+
+.signup-submit {
+    transition: all 0.22s var(--easing-spring) !important;
+}
+
+.signup-submit:active {
+    transform: scale(0.97) !important;
+}
+
+/* ── Tablette (641px – 1024px) ── */
+@media (max-width: 1024px) and (min-width: 641px) {
+    .signup-container {
+        padding: 1.5rem 3rem 4rem;
+    }
+
+    .signup-illustration {
+        width: 540px;
+    }
+}
+
+/* ── Mobile (≤ 640px) ── */
 @media (max-width: 640px) {
     .signup-container {
-        padding: 2.5rem 1rem 4rem;
+        padding: 1.5rem 1rem 5rem;
+    }
+
+    .signup-wrapper {
+        max-width: 100%;
     }
 
     .signup-card {
-        padding: 1.5rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+    }
+
+    .signup-title {
+        font-size: 1.6rem;
+    }
+
+    .signup-logo {
+        height: 90px;
     }
 
     .signup-illustration-container {
@@ -217,11 +263,27 @@
     }
 
     .signup-illustration {
-        width: 520px;
+        width: 320px;
     }
 
     .signup-help {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* ── Très petit mobile (≤ 380px) ── */
+@media (max-width: 380px) {
+    .signup-title {
+        font-size: 1.4rem;
+    }
+
+    .signup-logo {
+        height: 72px;
+    }
+
+    .signup-illustration-container {
+        display: none;
     }
 }

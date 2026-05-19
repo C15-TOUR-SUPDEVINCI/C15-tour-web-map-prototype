@@ -94,3 +94,41 @@
   transform: rotate(-45deg) scale(1.1) !important;
   box-shadow: 0 4px 12px rgba(187, 72, 124, 0.4) !important;
 }
+
+/* ════════════════════════════════════════════
+   RESPONSIVE MOBILE / TABLETTE
+   ════════════════════════════════════════════ */
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  /* Décaler les contrôles zoom vers le haut pour ne pas être sous le bottom sheet */
+  .leaflet-bottom.leaflet-right {
+    bottom: 58vh !important;
+  }
+
+  /* Barre de recherche géocodeur plus compacte */
+  .leaflet-control-geocoder {
+    border-radius: var(--radius-md) !important;
+  }
+
+  .leaflet-control-geocoder-form input {
+    font-size: 0.9rem !important;
+    padding: 0.4rem 0.85rem !important;
+  }
+
+  /* Boutons de zoom plus grands pour le touch */
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out {
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+    font-size: 18px !important;
+  }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: 63vh !important;
+  }
+}

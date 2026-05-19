@@ -1,5 +1,10 @@
 /* Layout principal de l'app */
 
+/* Poignée cachée sur desktop */
+.drag-handle {
+  display: none;
+}
+
 .app-container {
   display: flex;
   width: 100%;
@@ -26,6 +31,8 @@
   left: 0;
   pointer-events: none;
   background-color: transparent;
+  /* Animation d'entrée sur desktop */
+  animation: slideInLeft 0.45s var(--easing-spring) both;
 }
 
 /* Fond flou avec dégradé sur la sidebar */
@@ -53,23 +60,105 @@
   width: 100%;
   height: 100%;
   z-index: 1;
+  /* Animation d'entrée subtile */
+  animation: fadeIn 0.5s ease both;
 }
 
-/* Responsive */
+/* ── Tablette (768px – 1024px) ── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .sidebar {
+    width: 340px;
+    min-width: 300px;
+    padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+/* ── Mobile et petite tablette (≤ 768px) ── */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
   }
 
-  .sidebar {
+  /* La carte occupe tout l'écran en fond */
+  .map-section {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    max-width: 100%;
-    height: 40%;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    height: 100%;
+    z-index: 1;
   }
 
-  .map-section {
-    height: 60%;
+  /* Le panneau arrive en bas comme un "bottom sheet" */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+    height: 55vh;
+    min-height: 260px;
+    max-height: 80vh;
+    padding: 0.6rem 0.75rem 1rem;
+    gap: 0.5rem;
+    overflow-y: hidden;
+    border-radius: 20px 20px 0 0;
+    background-color: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -6px 32px rgba(187, 72, 124, 0.15), 0 -2px 8px rgba(0,0,0,0.06);
+    z-index: 1000;
+    pointer-events: auto;
+    /* Poignée visuelle en haut */
+    border-top: none;
+    /* Animation d'entrée : glisse depuis le bas */
+    animation: slideUpFromBottom 0.5s var(--easing-spring) both;
+  }
+
+  /* Le ::before de .sidebar est rendu inutile par overflow-y — on le masque */
+  .sidebar::before {
+    display: none;
+  }
+
+  /* Poignée HTML rendue dans EditorView, au-dessus du WaypointPanel */
+  .drag-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(187, 72, 124, 0.35);
+    border-radius: 4px;
+    margin: 0 auto;
+    flex-shrink: 0;
+    cursor: grab;
+    pointer-events: auto;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+    background: rgba(187, 72, 124, 0.65);
+  }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .sidebar {
+    height: 60vh;
+    padding: 0.5rem 0.5rem 0.75rem;
+  }
+}
+
+/* ── Animation slide depuis le bas ── */
+@keyframes slideUpFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
