@@ -50,17 +50,53 @@
   display: none;
 }
 
-/* Responsive */
-@media (max-width: 400px) {
+/* ── Tablette (769px – 1024px) ── */
+@media (max-width: 1024px) and (min-width: 769px) {
   .route-stats {
-    padding: 1rem;
+    padding: 1.25rem;
+  }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .route-stats {
+    padding: 0.9rem 1rem;
+    min-height: 80px;
+    border-radius: var(--radius-lg);
+    border-width: 2px;
   }
 
+  .stat-header {
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+  }
+
+  /* Afficher les labels sur mobile pour la lisibilité */
   .stat-label {
-    font-size: 0.8rem;
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .stat-value {
-    font-size: 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .route-stats {
+    padding: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 0.88rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
   }
 }

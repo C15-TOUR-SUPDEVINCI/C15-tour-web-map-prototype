@@ -127,4 +127,67 @@
   background-color: var(--primary-rose-alpha-10);
 }
 
+/* ── Tablette (769px – 1024px) ── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .waypoint-main-row {
+    gap: 0.75rem;
+  }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .waypoint-main-row {
+    gap: 0.6rem;
+    padding: 0.2rem 0;
+  }
+
+  /* Zone tactile agrandie */
+  .item-action-btn,
+  .item-delete-btn {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .waypoint-title {
+    font-size: 0.88rem;
+  }
+
+  .waypoint-icon-container {
+    width: 36px;
+    height: 36px;
+  }
+
+  .waypoint-icon-container .custom-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .group-select {
+    max-width: 90px;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.35rem;
+  }
+
+  .group-label {
+    display: none;
+  }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .waypoint-title {
+    font-size: 0.82rem;
+  }
+
+  .item-action-btn,
+  .item-delete-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .waypoint-right {
+    gap: 0.3rem;
+  }
+}
+
 /* Bouton suppr */

@@ -1,5 +1,10 @@
 /* Layout principal de l'app */
 
+/* Poignée cachée sur desktop */
+.drag-handle {
+  display: none;
+}
+
 .app-container {
   display: flex;
   width: 100%;
@@ -26,6 +31,8 @@
   left: 0;
   pointer-events: none;
   background-color: transparent;
+  /* Animation d'entrée sur desktop */
+  animation: slideInLeft 0.45s var(--easing-spring) both;
 }
 
 /* Fond flou avec dégradé sur la sidebar */
@@ -53,23 +60,158 @@
   width: 100%;
   height: 100%;
   z-index: 1;
+  /* Animation d'entrée subtile */
+  animation: fadeIn 0.5s ease both;
 }
 
-/* Responsive */
+/* ── Tablette / iPad (769px – 1024px) : bottom-sheet ── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .app-container {
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* La carte prend tout l'écran */
+  .map-section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* Sidebar en bottom-sheet sur iPad */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    height: 45vh;
+    min-height: 300px;
+    padding: 0.5rem 1.25rem 1rem;
+    gap: 0.5rem;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    background-color: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -6px 32px rgba(187, 72, 124, 0.18), 0 -2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    pointer-events: auto;
+    border-right: none;
+  }
+
+  .sidebar::before {
+    display: none;
+  }
+
+  .drag-handle {
+    display: block;
+    width: 40px;
+    height: 5px;
+    background: rgba(187, 72, 124, 0.3);
+    border-radius: 99px;
+    margin: 0 auto 0.25rem;
+    flex-shrink: 0;
+    cursor: grab;
+    pointer-events: auto;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+    background: rgba(187, 72, 124, 0.6);
+  }
+}
+
+/* ── Mobile (≤ 768px) : bottom-sheet ── */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
   }
 
-  .sidebar {
-    width: 100%;
-    max-width: 100%;
-    height: 40%;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
+  /* La carte prend tout l'écran en arrière-plan */
   .map-section {
-    height: 60%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* La sidebar est un bottom-sheet fixé en bas */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+    height: 55vh;
+    min-height: 260px;
+    max-height: 85vh;
+    padding: 0.5rem 0.75rem 1rem;
+    gap: 0.5rem;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    background-color: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -6px 32px rgba(187, 72, 124, 0.18), 0 -2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    pointer-events: auto;
+    animation: slideUpFromBottom 0.4s ease both;
+  }
+
+  /* Masquer le pseudo-élément fond flou (inutile sur mobile) */
+  .sidebar::before {
+    display: none;
+  }
+
+  /* Poignée de glissement centrée en haut du panneau */
+  .drag-handle {
+    display: block;
+    width: 40px;
+    height: 5px;
+    background: rgba(187, 72, 124, 0.3);
+    border-radius: 99px;
+    margin: 0 auto 0.25rem;
+    flex-shrink: 0;
+    cursor: grab;
+    pointer-events: auto;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+    background: rgba(187, 72, 124, 0.6);
+  }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .sidebar {
+    height: 60vh;
+    padding: 0.5rem 0.5rem 0.75rem;
+  }
+}
+
+/* ── Animation slide depuis le bas ── */
+@keyframes slideUpFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
