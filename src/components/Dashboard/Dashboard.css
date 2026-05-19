@@ -148,6 +148,7 @@
     flex-shrink: 0;
 }
 
+
 /* ════════════════════════════════════════════
    ZONE PRINCIPALE
    ════════════════════════════════════════════ */
@@ -614,7 +615,7 @@
     }
 }
 
-/* ── Responsive (≤ 800px) ── */
+/* ── Responsive (≤ 800px) : masquer les colonnes meta ── */
 @media (max-width: 800px) {
     .db-content {
         max-width: 100%;
@@ -623,8 +624,6 @@
     .db-row-meta {
         display: none;
     }
-
-    /* Cache les meta sur petit écran pour gagner de la place */
 }
 
 /* ── Mobile (≤ 680px) ── */
