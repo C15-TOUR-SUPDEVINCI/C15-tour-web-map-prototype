@@ -105,12 +105,12 @@ export default function Login() {
                                             const userProfile = await profileRes.json();
                                             login(token, userProfile);
                                         } else {
-                                            login(token);
+                                            login(token, null);
                                         }
                                     }
                                     navigate('/dashboard');
-                                } catch (err: any) {
-                                    setErrorMessage(err.message || 'Une erreur est survenue.');
+                                } catch (err: unknown) {
+                                    setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                                 } finally {
                                     setLoading(false);
                                 }
@@ -166,7 +166,7 @@ export default function Login() {
                         ) : null}
 
                         <div className="login-help">
-                            <button className="login-link" type="button">
+                            <button className="login-link" type="button" onClick={() => navigate('/reset-password')}>
                                 Mot de passe oublié ?
                             </button>
                         </div>
