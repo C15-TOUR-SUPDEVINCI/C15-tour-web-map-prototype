@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
-    Plus, Trash2,
+    Plus, Trash2, X,
     UserPlus, UploadCloud, Loader2, LogOut,
     Search, ArrowUpDown, ArrowDown, ArrowUp,
     Pin
@@ -14,6 +14,15 @@ import logoImg from '../../assets/logo-tour95.png';
 
 const PILL_COLORS = ['#bb487c', '#e07b4a', '#4a9ee0', '#6abf69', '#a05cc8', '#d4a843'];
 type SortKey = 'date' | 'name' | 'steps';
+
+// Fonction simple pour avoir un hash numérique à partir d'une string (pour fixer la couleur)
+const hashString = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+};
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -81,8 +90,18 @@ export function Dashboard() {
         }
     };
 
-    const formatDate = (d: string) =>
-        new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    const formatDate = (d: string) => {
+        const date = new Date(d);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return "Aujourd'hui";
+        if (diffDays === 1) return "Hier";
+        if (diffDays < 7) return `Il y a ${diffDays} jours`;
+        
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
 
     const handleOpen = (id: string) => { openItinerary(id); navigate(`/editor/${id}`); };
 
@@ -137,7 +156,7 @@ export function Dashboard() {
                         {/* ── Toolbar (barre de recherche + tri) ── */}
                         <div className="db-toolbar">
                             <div className="db-search-wrap">
-                                <Search size={15} className="db-search-icon" />
+                                <Search size={15} className={`db-search-icon ${search ? 'db-search-icon--active' : ''}`} />
                                 <input
                                     className="db-search"
                                     type="search"
@@ -145,6 +164,11 @@ export function Dashboard() {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
+                                {search && (
+                                    <button className="db-search-clear" onClick={() => setSearch('')}>
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
                             <div className="db-sort-group">
                                 <ArrowUpDown size={14} className="db-sort-icon" />
@@ -175,12 +199,16 @@ export function Dashboard() {
 
                         {filtered.map((itinerary, idx) => {
                             const count = itinerary.waypoints.length;
-                            const color = PILL_COLORS[idx % PILL_COLORS.length];
+                            const color = PILL_COLORS[hashString(itinerary.id) % PILL_COLORS.length];
                             const isPinned = pinnedIds.has(itinerary.id);
                             const isPublished = publishedIds.has(itinerary.id);
 
                             return (
-                                <div key={itinerary.id} className="db-row">
+                                <div 
+                                    key={itinerary.id} 
+                                    className="db-row"
+                                    style={{ animationDelay: `${idx * 0.05}s` }}
+                                >
                                     {/* Overlay flou "Modifier" - Apparaît au hover sur toute la div .db-row */}
                                     <div className="db-edit-overlay">
                                         <span className="db-edit-text">+ Modifier</span>

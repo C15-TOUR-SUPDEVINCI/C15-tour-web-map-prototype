@@ -40,12 +40,7 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    background:
-        linear-gradient(to right,  rgba(187, 72, 124, 0.45) 0px, transparent 180px),
-        linear-gradient(to left,   rgba(187, 72, 124, 0.45) 0px, transparent 180px),
-        linear-gradient(to bottom, rgba(187, 72, 124, 0.38) 0px, transparent 130px),
-        linear-gradient(to top,    rgba(187, 72, 124, 0.38) 0px, transparent 130px),
-        rgba(252, 231, 243, 0.15);
+    background: rgba(187, 72, 124, 0.15); /* Couleur semi-transparente unie (C15 Tour #bb487c) */
 }
 
 /* ── Illustration van ── */
