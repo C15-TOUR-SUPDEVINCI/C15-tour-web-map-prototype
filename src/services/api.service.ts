@@ -1,7 +1,7 @@
 import type { Itinerary } from '../domain';
 import { toApiPointType } from '../domain';
 
-const BASE_URL = 'https://c15-tour-back.vercel.app';
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://c15-tour-back.vercel.app';
 
 // Helper pour gérer les réponses d'API
 async function handleResponse(response: Response) {

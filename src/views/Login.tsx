@@ -83,7 +83,7 @@ export default function Login() {
                                 setErrorMessage('');
 
                                 try {
-                                    const response = await fetch('https://c15-tour-back.vercel.app/api/auth/login', {
+                                    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ email, password })
@@ -97,16 +97,15 @@ export default function Login() {
                                     const token = data.access_token || data.token;
 
                                     if (token) {
-                                        const profileRes = await fetch('https://c15-tour-back.vercel.app/api/auth/profile', {
-                                            headers: { 'Authorization': `Bearer ${token}` }
+                                        const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+                                            headers: { 'Authorization': `Bearer ${token}` },
                                         });
 
-                                        if (profileRes.ok) {
-                                            const userProfile = await profileRes.json();
-                                            login(token, userProfile);
-                                        } else {
-                                            login(token, null);
+                                        if (!profileRes.ok) {
+                                            throw new Error("Impossible de récupérer le profil utilisateur.");
                                         }
+                                        const userProfile = await profileRes.json();
+                                        login(token, userProfile);
                                     }
                                     navigate('/dashboard');
                                 } catch (err: unknown) {
