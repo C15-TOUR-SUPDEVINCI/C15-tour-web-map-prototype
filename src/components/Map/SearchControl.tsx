@@ -21,7 +21,6 @@ type GeocoderControl = Control & {
 export function SearchControl() {
   const map = useMap();
   const addWaypoint = useRouteStore((state) => state.addWaypoint);
-
   useEffect(() => {
     if (!map) return;
 
@@ -33,17 +32,21 @@ export function SearchControl() {
           countrycodes: 'fr',
           limit: 5,
         },
-      });
+      }) as { geocode: (q: string) => Promise<unknown[]>; suggest?: (q: string) => Promise<unknown[]> };
+
+      // Nominatim n'implémente pas suggest() → on le branche sur geocode() pour activer l'autocomplétion
+      nominatimGeocoder.suggest = (query: string) => nominatimGeocoder.geocode(query);
 
       searchControl = (geocoder as unknown as (opts: unknown) => GeocoderControl)({
         geocoder: nominatimGeocoder,
         defaultMarkGeocode: false,
         placeholder: 'Rechercher une adresse...',
         errorMessage: 'Adresse non trouvée',
+        collapsed: false,
         showResultIcons: true,
         suggestMinLength: 3,
         suggestTimeout: 250,
-        position: 'topright',
+        position: 'topleft',
       });
 
       searchControl.addTo(map);

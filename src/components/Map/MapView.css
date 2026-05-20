@@ -24,6 +24,23 @@
   cursor: grabbing;
 }
 
+/* Centrage du conteneur topleft pour la barre de recherche */
+.leaflet-top.leaflet-left {
+  pointer-events: none;
+}
+
+.leaflet-top.leaflet-left .leaflet-control {
+  pointer-events: auto;
+}
+
+/* Centrage uniquement sur desktop */
+@media (min-width: 769px) {
+  .leaflet-top.leaflet-left {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 /* Barre de recherche Leaflet */
 .leaflet-control-geocoder {
   border-radius: var(--radius-lg) !important;
@@ -33,6 +50,15 @@
   background-color: var(--bg-glass) !important;
   backdrop-filter: blur(var(--blur-amount));
   -webkit-backdrop-filter: blur(var(--blur-amount));
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}
+
+.leaflet-control-geocoder-form {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
 }
 
 .leaflet-control-geocoder-form input {
@@ -44,6 +70,7 @@
 
 .leaflet-control-geocoder-icon {
   background-color: transparent !important;
+  flex-shrink: 0 !important;
 }
 
 /* Boutons de zoom */
@@ -99,6 +126,19 @@
    RESPONSIVE MOBILE / TABLETTE
    ════════════════════════════════════════════ */
 
+/* ── Desktop (> 1024px) ── */
+@media (min-width: 1025px) {
+  .leaflet-control-geocoder {
+    width: 560px !important;
+    min-width: 560px !important;
+  }
+
+  .leaflet-control-geocoder-form input {
+    font-size: 1rem !important;
+    padding: 0.65rem 1.2rem !important;
+  }
+}
+
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   /* Décaler les contrôles zoom vers le haut pour ne pas être sous le bottom sheet */
@@ -106,14 +146,15 @@
     bottom: 58vh !important;
   }
 
-  /* Barre de recherche géocodeur plus compacte */
-  .leaflet-control-geocoder {
-    border-radius: var(--radius-md) !important;
+  /* Centrer la barre de recherche sur mobile */
+  .leaflet-top.leaflet-left {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
   }
 
-  .leaflet-control-geocoder-form input {
-    font-size: 0.9rem !important;
-    padding: 0.4rem 0.85rem !important;
+  /* Descendre le zoom sous la barre de recherche */
+  .leaflet-top.leaflet-right {
+    margin-top: 3.5rem !important;
   }
 
   /* Boutons de zoom plus grands pour le touch */
