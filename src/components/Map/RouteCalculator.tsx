@@ -6,16 +6,16 @@ import { useRouteStore } from '../../store/useRouteStore';
 import { calculateRoute } from '../../services/routing.service';
 
 export function RouteCalculator() {
-  const waypoints = useRouteStore((state) => state.waypoints);
+  const coordsKey = useRouteStore((state) =>
+    state.waypoints.map((wp) => `${wp.lat},${wp.lng}`).join('|')
+  );
 
   useEffect(() => {
-    const computeRoute = async () => {
+    const timer = setTimeout(async () => {
+      const { waypoints } = useRouteStore.getState();
+
       if (waypoints.length < 2) {
-        useRouteStore.setState({
-          routeCoordinates: [],
-          routeDistance: null,
-          routeDuration: null,
-        });
+        useRouteStore.setState({ routeCoordinates: [], routeDistance: null, routeDuration: null });
         return;
       }
 
@@ -30,21 +30,17 @@ export function RouteCalculator() {
         });
       } else {
         // Si OSRM ne répond pas, on trace juste des lignes droites
-        const straightLine: [number, number][] = waypoints.map((wp) => [
-          wp.lat,
-          wp.lng,
-        ]);
         useRouteStore.setState({
-          routeCoordinates: straightLine,
+          routeCoordinates: waypoints.map((wp) => [wp.lat, wp.lng] as [number, number]),
           routeDistance: null,
           routeDuration: null,
           routeLegs: [],
         });
       }
-    };
+    }, 400);
 
-    computeRoute();
-  }, [waypoints]);
+    return () => clearTimeout(timer);
+  }, [coordsKey]);
 
   return null;
 }

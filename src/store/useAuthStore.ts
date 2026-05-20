@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
                     const data = await res.json();
                     const newToken: string = data.access_token || data.token;
                     if (!newToken) return false;
-                    set({ token: newToken });
+                    set({ token: newToken, loginAt: Date.now() });
                     return true;
                 } catch {
                     return false;

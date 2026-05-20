@@ -20,27 +20,38 @@ export default function EditorView() {
   const dragStartVh = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
 
-  const handleMove = (clientY: number) => {
-    if (!isDragging.current || !sidebarRef.current) return;
-    const deltaY = dragStartY.current - clientY;
-    const deltaVh = (deltaY / window.innerHeight) * 100;
-    const newVh = Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh));
-    sidebarRef.current.style.height = `${newVh}vh`;
-  };
+  const handlersRef = useRef({
+    mouseMove: (e: MouseEvent) => {
+      if (!isDragging.current || !sidebarRef.current) return;
+      const deltaY = dragStartY.current - e.clientY;
+      const deltaVh = (deltaY / window.innerHeight) * 100;
+      sidebarRef.current.style.height = `${Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh))}vh`;
+    },
+    touchMove: (e: TouchEvent) => {
+      e.preventDefault();
+      if (!isDragging.current || !sidebarRef.current) return;
+      const deltaY = dragStartY.current - e.touches[0].clientY;
+      const deltaVh = (deltaY / window.innerHeight) * 100;
+      sidebarRef.current.style.height = `${Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh))}vh`;
+    },
+    end: () => {
+      isDragging.current = false;
+      document.removeEventListener('mousemove', handlersRef.current.mouseMove);
+      document.removeEventListener('mouseup', handlersRef.current.end);
+      document.removeEventListener('touchmove', handlersRef.current.touchMove);
+      document.removeEventListener('touchend', handlersRef.current.end);
+    },
+  });
 
-  const handleEnd = () => {
-    isDragging.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleEnd);
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleEnd);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
-  const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault();
-    handleMove(e.touches[0].clientY);
-  };
+  useEffect(() => {
+    const { mouseMove, touchMove, end } = handlersRef.current;
+    return () => {
+      document.removeEventListener('mousemove', mouseMove);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', touchMove);
+      document.removeEventListener('touchend', end);
+    };
+  }, []);
 
   const startDrag = (clientY: number) => {
     if (!sidebarRef.current) return;
@@ -48,10 +59,11 @@ export default function EditorView() {
     dragStartY.current = clientY;
     dragStartVh.current = (h / window.innerHeight) * 100;
     isDragging.current = true;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
+    const { mouseMove, touchMove, end } = handlersRef.current;
+    document.addEventListener('mousemove', mouseMove);
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', touchMove, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   useEffect(() => {

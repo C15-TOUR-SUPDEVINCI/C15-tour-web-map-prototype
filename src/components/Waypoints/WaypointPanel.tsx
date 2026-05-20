@@ -121,25 +121,6 @@ export function WaypointPanel() {
         </header>
 
         <div className="panel-content">
-          {/* {!showGroups ? (
-            <button
-              className="toggle-groups-btn"
-              onClick={() => setShowGroups(true)}
-            >
-              <ChevronDown size={18} /> Modifier les Groupes
-            </button>
-          ) : (
-            <>
-              <button
-                className="toggle-groups-btn"
-                onClick={() => setShowGroups(false)}
-              >
-                <ChevronUp size={18} /> Masquer les Groupes
-              </button>
-              <GroupManager />
-            </>
-          )} */}
-
           <WaypointList />
         </div>
       </div>

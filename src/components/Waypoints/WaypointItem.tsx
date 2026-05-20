@@ -32,7 +32,12 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   const waypoints = useRouteStore((state) => state.waypoints);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editLabel, setEditLabel] = useState(waypoint.label);
+  const [editLabel, setEditLabel] = useState('');
+
+  const handleStartEdit = () => {
+    setEditLabel(waypoint.label);
+    setIsEditing(true);
+  };
 
   const isFirst = waypoint.order === 1;
   const isLast = waypoint.order === waypoints.length;
@@ -104,7 +109,7 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
           {!isFirst && !isLast && (
             <button
               className="item-action-btn btn-rose-outline"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => isEditing ? handleSaveLabel() : handleStartEdit()}
               aria-label="Modifier le nom"
             >
               {isEditing ? <Check size={16} /> : <Edit2 size={16} />}

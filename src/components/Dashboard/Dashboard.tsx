@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { publishItinerary } from '../../services/api.service';
+import type { Itinerary } from '../../domain';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 
@@ -37,13 +38,27 @@ export function Dashboard() {
     const logout = useAuthStore((s) => s.logout);
 
     const [isPublishing, setIsPublishing] = useState<string | null>(null);
-    const [publishedIds, setPublishedIds] = useState<Set<string>>(new Set());
-    const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+    const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem('c15-published-ids') ?? '[]') as string[]); }
+        catch { return new Set(); }
+    });
+    const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem('c15-pinned-ids') ?? '[]') as string[]); }
+        catch { return new Set(); }
+    });
     const [search, setSearch] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('date');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     useEffect(() => { loadAll(); }, [loadAll]);
+
+    useEffect(() => {
+        localStorage.setItem('c15-published-ids', JSON.stringify([...publishedIds]));
+    }, [publishedIds]);
+
+    useEffect(() => {
+        localStorage.setItem('c15-pinned-ids', JSON.stringify([...pinnedIds]));
+    }, [pinnedIds]);
 
     const handleSortClick = (key: SortKey) => {
         if (sortKey === key) {
@@ -76,15 +91,15 @@ export function Dashboard() {
         return [...pinned, ...unpinned];
     }, [itineraries, search, sortKey, sortDir, pinnedIds]);
 
-    const handlePublish = async (itinerary: any) => {
+    const handlePublish = async (itinerary: Itinerary) => {
         if (!token) { alert('Vous devez être connecté pour publier.'); return; }
         setIsPublishing(itinerary.id);
         try {
             if (!user?.id) throw new Error('ID utilisateur manquant.');
             await publishItinerary(token, itinerary, user.id);
             setPublishedIds(prev => new Set([...prev, itinerary.id]));
-        } catch (error: any) {
-            alert(`❌ Erreur : ${error.message}`);
+        } catch (error: unknown) {
+            alert(`❌ Erreur : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setIsPublishing(null);
         }
@@ -108,7 +123,7 @@ export function Dashboard() {
     const togglePin = (id: string) => {
         setPinnedIds(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) { next.delete(id); } else { next.add(id); }
             return next;
         });
     };

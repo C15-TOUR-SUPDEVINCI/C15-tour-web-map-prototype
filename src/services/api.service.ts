@@ -3,6 +3,37 @@ import { toApiPointType } from '../domain';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://c15-tour-back.vercel.app';
 
+type EventPayload = {
+    title: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    maxParticipants: number;
+    organizerId: string;
+};
+
+type RoutePayload = {
+    eventId: string;
+    name: string;
+    description: string;
+    routeType: string;
+    difficultyLevel: string;
+    totalDistanceKm: number;
+    estimatedDurationMinutes: number;
+};
+
+type PointPayload = {
+    routeId: string;
+    type: string;
+    order: number;
+    latitude: number;
+    longitude: number;
+    name: string;
+    address: string;
+    description: string;
+    pauseDurationMinutes: number;
+};
+
 // Helper pour gérer les réponses d'API
 async function handleResponse(response: Response) {
     if (!response.ok) {
@@ -15,7 +46,7 @@ async function handleResponse(response: Response) {
 }
 
 // 1. Créer un Événement
-export async function createEvent(token: string, data: any) {
+export async function createEvent(token: string, data: EventPayload) {
     const res = await fetch(`${BASE_URL}/api/events`, {
         method: 'POST',
         headers: {
@@ -28,7 +59,7 @@ export async function createEvent(token: string, data: any) {
 }
 
 // 2. Créer une Route (Groupe)
-export async function createRoute(token: string, data: any) {
+export async function createRoute(token: string, data: RoutePayload) {
     const res = await fetch(`${BASE_URL}/api/routes`, {
         method: 'POST',
         headers: {
@@ -41,7 +72,7 @@ export async function createRoute(token: string, data: any) {
 }
 
 // 3. Créer un Point (Waypoint)
-export async function createPoint(token: string, data: any) {
+export async function createPoint(token: string, data: PointPayload) {
     const res = await fetch(`${BASE_URL}/api/points`, {
         method: 'POST',
         headers: {

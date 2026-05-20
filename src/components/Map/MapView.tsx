@@ -32,14 +32,13 @@ function MapClickHandler() {
     click: (e) => {
       const { lat, lng } = e.latlng;
       addWaypoint(lat, lng, `Chargement de l'adresse...`);
-      
-      reverseGeocode(lat, lng).then(address => {
-        const state = useRouteStore.getState();
-        const lastWaypoint = state.waypoints.at(-1);
-        if (lastWaypoint) {
-          updateWaypointAddress(lastWaypoint.id, address);
-        }
-      });
+      const newId = useRouteStore.getState().waypoints.at(-1)?.id;
+
+      if (newId) {
+        reverseGeocode(lat, lng).then(address => {
+          updateWaypointAddress(newId, address);
+        });
+      }
     },
   });
 
