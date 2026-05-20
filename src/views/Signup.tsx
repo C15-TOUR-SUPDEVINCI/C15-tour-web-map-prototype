@@ -52,7 +52,7 @@ export default function Signup() {
 
                             try {
                                 const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
-                                const response = await fetch('https://c15-tour-back.vercel.app/api/users', {
+                                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -71,8 +71,8 @@ export default function Signup() {
 
                                 alert('Utilisateur créé avec succès !');
                                 navigate('/dashboard');
-                            } catch (err: any) {
-                                setErrorMessage(err.message || 'Une erreur est survenue.');
+                            } catch (err: unknown) {
+                                setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                             } finally {
                                 setLoading(false);
                             }

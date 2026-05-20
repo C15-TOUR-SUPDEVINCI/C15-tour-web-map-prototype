@@ -62,7 +62,7 @@ interface RouteStore {
   generatePayload: () => RoutePayload;
 }
 
-const DEFAULT_GROUP_ID = 'default-group';
+export const DEFAULT_GROUP_ID = 'default-group';
 const STORAGE_KEY = 'c15-itineraries';
 
 // Helpers de date par défaut (Aujourd'hui et Demain)
@@ -283,7 +283,8 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     if (activeIndex === -1) return;
 
     const nextWaypoints = [...waypoints];
-    const [movedWaypoint] = nextWaypoints.splice(activeIndex, 1);
+    const [movedRef] = nextWaypoints.splice(activeIndex, 1);
+    const movedWaypoint = { ...movedRef };
 
     // Change de groupe si on drop dans un autre groupe
     if (overGroupId) {

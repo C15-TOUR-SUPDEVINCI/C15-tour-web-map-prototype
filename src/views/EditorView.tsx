@@ -13,34 +13,46 @@ export default function EditorView() {
   const openItinerary = useRouteStore((state) => state.openItinerary);
   const loadAll = useRouteStore((state) => state.loadAll);
   const currentId = useRouteStore((state) => state.currentId);
-  const itineraries = useRouteStore((state) => state.itineraries);
+  const itinerariesLoaded = useRouteStore((state) => state.itineraries.length > 0);
+  const itineraryExists = useRouteStore((state) => state.itineraries.some((it) => it.id === id));
 
   const sidebarRef = useRef<HTMLElement>(null);
   const dragStartY = useRef<number>(0);
   const dragStartVh = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
 
-  const handleMove = (clientY: number) => {
-    if (!isDragging.current || !sidebarRef.current) return;
-    const deltaY = dragStartY.current - clientY;
-    const deltaVh = (deltaY / window.innerHeight) * 100;
-    const newVh = Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh));
-    sidebarRef.current.style.height = `${newVh}vh`;
-  };
+  const handlersRef = useRef({
+    mouseMove: (e: MouseEvent) => {
+      if (!isDragging.current || !sidebarRef.current) return;
+      const deltaY = dragStartY.current - e.clientY;
+      const deltaVh = (deltaY / window.innerHeight) * 100;
+      sidebarRef.current.style.height = `${Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh))}vh`;
+    },
+    touchMove: (e: TouchEvent) => {
+      e.preventDefault();
+      if (!isDragging.current || !sidebarRef.current) return;
+      const deltaY = dragStartY.current - e.touches[0].clientY;
+      const deltaVh = (deltaY / window.innerHeight) * 100;
+      sidebarRef.current.style.height = `${Math.min(MAX_VH, Math.max(MIN_VH, dragStartVh.current + deltaVh))}vh`;
+    },
+    end: () => {
+      isDragging.current = false;
+      document.removeEventListener('mousemove', handlersRef.current.mouseMove);
+      document.removeEventListener('mouseup', handlersRef.current.end);
+      document.removeEventListener('touchmove', handlersRef.current.touchMove);
+      document.removeEventListener('touchend', handlersRef.current.end);
+    },
+  });
 
-  const handleEnd = () => {
-    isDragging.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleEnd);
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleEnd);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
-  const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault();
-    handleMove(e.touches[0].clientY);
-  };
+  useEffect(() => {
+    const { mouseMove, touchMove, end } = handlersRef.current;
+    return () => {
+      document.removeEventListener('mousemove', mouseMove);
+      document.removeEventListener('mouseup', end);
+      document.removeEventListener('touchmove', touchMove);
+      document.removeEventListener('touchend', end);
+    };
+  }, []);
 
   const startDrag = (clientY: number) => {
     if (!sidebarRef.current) return;
@@ -48,34 +60,26 @@ export default function EditorView() {
     dragStartY.current = clientY;
     dragStartVh.current = (h / window.innerHeight) * 100;
     isDragging.current = true;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
+    const { mouseMove, touchMove, end } = handlersRef.current;
+    document.addEventListener('mousemove', mouseMove);
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', touchMove, { passive: false });
+    document.addEventListener('touchend', end);
   };
 
   useEffect(() => {
-    // S'assurer que les itinéraires sont chargés
-    if (itineraries.length === 0) {
-      loadAll();
-    }
-  }, [itineraries.length, loadAll]);
+    if (!itinerariesLoaded) loadAll();
+  }, [itinerariesLoaded, loadAll]);
 
   useEffect(() => {
-    if (id && itineraries.length > 0) {
-      const exists = itineraries.some(it => it.id === id);
-      const isNew = id === currentId;
-      
-      if (exists || isNew) {
-        if (currentId !== id) {
-          openItinerary(id);
-        }
-      } else {
-        // Rediriger si l'ID n'existe pas et n'est pas le trajet en cours de création
-        navigate('/dashboard');
-      }
+    if (!id || !itinerariesLoaded) return;
+    const isNew = id === currentId;
+    if (itineraryExists || isNew) {
+      if (currentId !== id) openItinerary(id);
+    } else {
+      navigate('/dashboard');
     }
-  }, [id, itineraries, currentId, openItinerary, navigate]);
+  }, [id, itineraryExists, itinerariesLoaded, currentId, openItinerary, navigate]);
 
   return (
     <div className="app-container">
