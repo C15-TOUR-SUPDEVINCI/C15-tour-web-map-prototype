@@ -1,9 +1,11 @@
 import type { Itinerary } from '../domain';
 import { toApiPointType } from '../domain';
+import type { RouteType, DifficultyLevel } from '../domain/waypoint.types';
+import { API_URL } from '../config';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://c15-tour-back.vercel.app';
+const BASE_URL = API_URL;
 
-type EventPayload = {
+type ApiEventPayload = {
     title: string;
     description: string;
     startDate: string;
@@ -12,19 +14,19 @@ type EventPayload = {
     organizerId: string;
 };
 
-type RoutePayload = {
+type ApiRoutePayload = {
     eventId: string;
     name: string;
     description: string;
-    routeType: string;
-    difficultyLevel: string;
+    routeType: RouteType;
+    difficultyLevel: DifficultyLevel;
     totalDistanceKm: number;
     estimatedDurationMinutes: number;
 };
 
-type PointPayload = {
+type ApiPointPayload = {
     routeId: string;
-    type: string;
+    type: ReturnType<typeof toApiPointType>;
     order: number;
     latitude: number;
     longitude: number;
@@ -46,7 +48,7 @@ async function handleResponse(response: Response) {
 }
 
 // 1. Créer un Événement
-export async function createEvent(token: string, data: EventPayload) {
+export async function createEvent(token: string, data: ApiEventPayload) {
     const res = await fetch(`${BASE_URL}/api/events`, {
         method: 'POST',
         headers: {
@@ -59,7 +61,7 @@ export async function createEvent(token: string, data: EventPayload) {
 }
 
 // 2. Créer une Route (Groupe)
-export async function createRoute(token: string, data: RoutePayload) {
+export async function createRoute(token: string, data: ApiRoutePayload) {
     const res = await fetch(`${BASE_URL}/api/routes`, {
         method: 'POST',
         headers: {
@@ -72,7 +74,7 @@ export async function createRoute(token: string, data: RoutePayload) {
 }
 
 // 3. Créer un Point (Waypoint)
-export async function createPoint(token: string, data: PointPayload) {
+export async function createPoint(token: string, data: ApiPointPayload) {
     const res = await fetch(`${BASE_URL}/api/points`, {
         method: 'POST',
         headers: {
@@ -86,11 +88,7 @@ export async function createPoint(token: string, data: PointPayload) {
 
 // 4. Fonction principale : Publier un itinéraire complet
 export async function publishItinerary(token: string, itinerary: Itinerary, userId: string) {
-    console.log("Début de la publication de", itinerary.name);
-
-    // ETAPE A : Créer l'événement (L'itinéraire global)
-    // On mappe nos données locales vers ce que l'API attend
-    const eventPayload = {
+    const eventPayload: ApiEventPayload = {
         title: itinerary.name || "Nouvel Itinéraire",
         description: itinerary.description || "",
         startDate: itinerary.startDate || new Date().toISOString(),
@@ -100,17 +98,14 @@ export async function publishItinerary(token: string, itinerary: Itinerary, user
     };
 
     const createdEvent = await createEvent(token, eventPayload);
-    const eventId = createdEvent.id || createdEvent._id; // Adapter selon ce que le back renvoie exactement
+    const eventId: string = createdEvent.id || createdEvent._id;
 
     if (!eventId) {
         throw new Error("L'API n'a pas renvoyé l'ID de l'événement créé.");
     }
 
-    console.log("Événement créé avec l'ID:", eventId);
-
-    // ETAPE B : Traiter chaque Groupe comme une "Route" backend
     for (const group of itinerary.groups) {
-        const routePayload = {
+        const routePayload: ApiRoutePayload = {
             eventId: eventId,
             name: group.name || "Route sans nom",
             description: group.description || "",
@@ -121,36 +116,31 @@ export async function publishItinerary(token: string, itinerary: Itinerary, user
         };
 
         const createdRoute = await createRoute(token, routePayload);
-        const routeId = createdRoute.id || createdRoute._id;
+        const routeId: string = createdRoute.id || createdRoute._id;
 
         if (!routeId) continue;
-        console.log(`Route ${group.name} créée avec l'ID:`, routeId);
 
-        // ETAPE C : Assigner les points de ce groupe
-        // On filtre les waypoints pour ne garder que ceux de ce groupe
-        const groupWaypoints = itinerary.waypoints.filter(wp => wp.groupId === group.id);
+        const sortedWaypoints = itinerary.waypoints
+            .filter(wp => wp.groupId === group.id)
+            .sort((a, b) => a.order - b.order);
 
-        // On s'assure qu'ils sont envoyés dans le bon ordre (si besoin)
-        const sortedWaypoints = [...groupWaypoints].sort((a, b) => a.order - b.order);
-
-        for (const [index, wp] of sortedWaypoints.entries()) {
-            const pointPayload = {
-                routeId: routeId,
-                type: toApiPointType(wp.type), // Convertit EXTREMITY en PASSAGE
-                order: index + 1,
-                latitude: wp.lat,
-                longitude: wp.lng,
-                name: wp.label || "Point sans nom",
-                address: wp.address || "",
-                description: wp.description || "",
-                pauseDurationMinutes: wp.pauseDurationMinutes || 0
-            };
-
-            await createPoint(token, pointPayload);
-        }
-        console.log(`  -> ${sortedWaypoints.length} points créés pour cette route.`);
+        await Promise.all(
+            sortedWaypoints.map((wp, index) => {
+                const pointPayload: ApiPointPayload = {
+                    routeId,
+                    type: toApiPointType(wp.type),
+                    order: index + 1,
+                    latitude: wp.lat,
+                    longitude: wp.lng,
+                    name: wp.label || 'Point sans nom',
+                    address: wp.address || '',
+                    description: wp.description || '',
+                    pauseDurationMinutes: wp.pauseDurationMinutes || 0,
+                };
+                return createPoint(token, pointPayload);
+            })
+        );
     }
 
-    console.log("✅ Publication terminée avec succès !");
     return eventId;
 }

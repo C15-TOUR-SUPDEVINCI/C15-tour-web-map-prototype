@@ -62,7 +62,7 @@ interface RouteStore {
   generatePayload: () => RoutePayload;
 }
 
-const DEFAULT_GROUP_ID = 'default-group';
+export const DEFAULT_GROUP_ID = 'default-group';
 const STORAGE_KEY = 'c15-itineraries';
 
 // Helpers de date par défaut (Aujourd'hui et Demain)

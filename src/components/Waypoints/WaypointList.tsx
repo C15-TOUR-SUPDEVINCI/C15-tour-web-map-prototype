@@ -15,7 +15,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useRouteStore } from '../../store/useRouteStore';
+import { useRouteStore, DEFAULT_GROUP_ID } from '../../store/useRouteStore';
 import { WaypointItem } from './WaypointItem';
 import { MESSAGES } from '../../domain/constants';
 import { formatDistance, formatDuration } from '../../services/routing.service';
@@ -116,27 +116,22 @@ export function WaypointList() {
     );
   }
 
-  // Stats par groupe (distance + durée cumulées)
+  const waypointIndexMap = new Map(waypoints.map((wp, i) => [wp.id, i]));
+
   const groupStats = groups.map(group => {
     const groupWaypoints = waypoints.filter(wp => wp.groupId === group.id);
     let totalDistance = 0;
     let totalDuration = 0;
 
     groupWaypoints.forEach(wp => {
-      const globalIndex = waypoints.findIndex(w => w.id === wp.id);
+      const globalIndex = waypointIndexMap.get(wp.id) ?? -1;
       if (globalIndex > 0 && routeLegs[globalIndex - 1]) {
         totalDistance += routeLegs[globalIndex - 1].distance;
         totalDuration += routeLegs[globalIndex - 1].duration;
       }
     });
 
-    return {
-      id: group.id,
-      name: group.name,
-      distance: totalDistance,
-      duration: totalDuration,
-      waypoints: groupWaypoints
-    };
+    return { id: group.id, name: group.name, distance: totalDistance, duration: totalDuration, waypoints: groupWaypoints };
   });
 
   return (
@@ -210,7 +205,7 @@ export function WaypointList() {
                         >
                           <Edit2 size={14} />
                         </button>
-                        {group.id !== 'default-group' && (
+                        {group.id !== DEFAULT_GROUP_ID && (
                           <button
                             className="icon-button danger action-btn"
                             onClick={() => removeGroup(group.id)}

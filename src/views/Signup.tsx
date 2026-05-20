@@ -71,8 +71,8 @@ export default function Signup() {
 
                                 alert('Utilisateur créé avec succès !');
                                 navigate('/dashboard');
-                            } catch (err: any) {
-                                setErrorMessage(err.message || 'Une erreur est survenue.');
+                            } catch (err: unknown) {
+                                setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                             } finally {
                                 setLoading(false);
                             }

@@ -13,7 +13,8 @@ export default function EditorView() {
   const openItinerary = useRouteStore((state) => state.openItinerary);
   const loadAll = useRouteStore((state) => state.loadAll);
   const currentId = useRouteStore((state) => state.currentId);
-  const itineraries = useRouteStore((state) => state.itineraries);
+  const itinerariesLoaded = useRouteStore((state) => state.itineraries.length > 0);
+  const itineraryExists = useRouteStore((state) => state.itineraries.some((it) => it.id === id));
 
   const sidebarRef = useRef<HTMLElement>(null);
   const dragStartY = useRef<number>(0);
@@ -67,27 +68,18 @@ export default function EditorView() {
   };
 
   useEffect(() => {
-    // S'assurer que les itinéraires sont chargés
-    if (itineraries.length === 0) {
-      loadAll();
-    }
-  }, [itineraries.length, loadAll]);
+    if (!itinerariesLoaded) loadAll();
+  }, [itinerariesLoaded, loadAll]);
 
   useEffect(() => {
-    if (id && itineraries.length > 0) {
-      const exists = itineraries.some(it => it.id === id);
-      const isNew = id === currentId;
-      
-      if (exists || isNew) {
-        if (currentId !== id) {
-          openItinerary(id);
-        }
-      } else {
-        // Rediriger si l'ID n'existe pas et n'est pas le trajet en cours de création
-        navigate('/dashboard');
-      }
+    if (!id || !itinerariesLoaded) return;
+    const isNew = id === currentId;
+    if (itineraryExists || isNew) {
+      if (currentId !== id) openItinerary(id);
+    } else {
+      navigate('/dashboard');
     }
-  }, [id, itineraries, currentId, openItinerary, navigate]);
+  }, [id, itineraryExists, itinerariesLoaded, currentId, openItinerary, navigate]);
 
   return (
     <div className="app-container">

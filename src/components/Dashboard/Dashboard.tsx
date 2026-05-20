@@ -39,12 +39,16 @@ export function Dashboard() {
 
     const [isPublishing, setIsPublishing] = useState<string | null>(null);
     const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
-        try { return new Set(JSON.parse(localStorage.getItem('c15-published-ids') ?? '[]') as string[]); }
-        catch { return new Set(); }
+        try {
+            const parsed: unknown = JSON.parse(localStorage.getItem('c15-published-ids') ?? '[]');
+            return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
+        } catch { return new Set(); }
     });
     const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
-        try { return new Set(JSON.parse(localStorage.getItem('c15-pinned-ids') ?? '[]') as string[]); }
-        catch { return new Set(); }
+        try {
+            const parsed: unknown = JSON.parse(localStorage.getItem('c15-pinned-ids') ?? '[]');
+            return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
+        } catch { return new Set(); }
     });
     const [search, setSearch] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('date');
@@ -273,7 +277,11 @@ export function Dashboard() {
                                         <button
                                             className="db-action-btn db-action-btn--delete"
                                             onClick={() => {
-                                                if (confirm('Supprimer cet itinéraire ?')) deleteItinerary(itinerary.id);
+                                                if (confirm('Supprimer cet itinéraire ?')) {
+                                                    deleteItinerary(itinerary.id);
+                                                    setPublishedIds(prev => { const n = new Set(prev); n.delete(itinerary.id); return n; });
+                                                    setPinnedIds(prev => { const n = new Set(prev); n.delete(itinerary.id); return n; });
+                                                }
                                             }}
                                             title="Supprimer"
                                         >
