@@ -32,6 +32,18 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
+    const token = useAuthStore((state) => state.token);
+    const isInitializing = useAuthStore((state) => state.isInitializing);
+
+    useEffect(() => {
+        if (!isInitializing && token) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [isInitializing, navigate, token]);
+
+    if (isInitializing || token) {
+        return null;
+    }
 
     return (
         <div className="login-root">
@@ -112,7 +124,7 @@ export default function Login() {
                                         }
                                         const userProfile = await profileRes.json();
                                         login(token, userProfile);
-                                        navigate('/dashboard');
+                                        navigate('/dashboard', { replace: true });
                                     } else {
                                         throw new Error("Aucun token reçu de la part du serveur.");
                                     }

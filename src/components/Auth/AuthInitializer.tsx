@@ -29,8 +29,16 @@ export function AuthInitializer() {
             }
         };
 
-        scheduleOrExpire();
-        setInitializing(false);
+        const finishInitialization = () => {
+            scheduleOrExpire();
+            setInitializing(false);
+        };
+
+        const unsubscribeHydration = useAuthStore.persist.onFinishHydration(finishInitialization);
+
+        if (useAuthStore.persist.hasHydrated()) {
+            finishInitialization();
+        }
 
         const unsubscribe = useAuthStore.subscribe((state, prev) => {
             if (state.loginAt === prev.loginAt) return;
@@ -44,6 +52,7 @@ export function AuthInitializer() {
 
         return () => {
             if (timer !== null) clearTimeout(timer);
+            unsubscribeHydration?.();
             unsubscribe();
         };
     }, []);
