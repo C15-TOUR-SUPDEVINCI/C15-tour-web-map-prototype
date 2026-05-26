@@ -31,8 +31,8 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             loginAt: null,
             isInitializing: true,
-            login: (token, user) => set({ token, user, loginAt: Date.now(), isInitializing: false }),
-            logout: () => set({ token: null, user: null, loginAt: null, isInitializing: false }),
+            login: (token, user) => set({ token, user, loginAt: Date.now() }),
+            logout: () => set({ token: null, user: null, loginAt: null }),
             setInitializing: (value) => set({ isInitializing: value }),
             refreshAccessToken: async () => {
                 try {
@@ -44,7 +44,19 @@ export const useAuthStore = create<AuthState>()(
                     const data = await res.json();
                     const newToken: string = data.access_token || data.token;
                     if (!newToken) return false;
-                    set({ token: newToken, loginAt: Date.now() });
+                    try {
+                        const profileRes = await fetch(`${API_URL}/api/auth/profile`, {
+                            headers: { 'Authorization': `Bearer ${newToken}` },
+                        });
+                        if (profileRes.ok) {
+                            const user = await profileRes.json();
+                            set({ token: newToken, loginAt: Date.now(), user });
+                        } else {
+                            set({ token: newToken, loginAt: Date.now() });
+                        }
+                    } catch {
+                        set({ token: newToken, loginAt: Date.now() });
+                    }
                     return true;
                 } catch {
                     return false;
