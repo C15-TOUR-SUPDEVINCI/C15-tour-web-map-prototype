@@ -217,11 +217,13 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       lat,
       lng,
       label,
+      address: label,
       description: '',
       pauseDurationMinutes: 0,
       order: waypoints.length + 1,
       type: type ?? "EXTREMITY",
       groupId: targetGroupId,
+      isCustomName: false,
     };
 
     const next = recalcWaypointsTypes([...waypoints, newWaypoint]);
@@ -239,16 +241,30 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
   updateWaypointLabel: (id, label) => {
     set((state) => ({
-      waypoints: state.waypoints.map((wp) =>
-        wp.id === id ? { ...wp, label } : wp
-      ),
+      waypoints: state.waypoints.map((wp) => {
+        if (wp.id === id) {
+          const isDefault = !label || /^(étape|etape|point)\s+\d+$/i.test(label.trim()) || label.trim().toLowerCase() === 'départ' || label.trim().toLowerCase() === 'arrivée';
+          return {
+            ...wp,
+            label: isDefault ? (wp.address || '') : label,
+            isCustomName: !isDefault,
+          };
+        }
+        return wp;
+      }),
     }));
   },
 
   updateWaypointAddress: (id, address) => {
     set((state) => ({
       waypoints: state.waypoints.map((wp) =>
-        wp.id === id ? { ...wp, address } : wp // Modification ici: on sauve dans address plutôt que d'écraser le label
+        wp.id === id
+          ? {
+              ...wp,
+              address,
+              label: wp.isCustomName ? wp.label : address,
+            }
+          : wp
       ),
     }));
   },

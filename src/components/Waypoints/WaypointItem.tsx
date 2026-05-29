@@ -35,15 +35,17 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   const [editLabel, setEditLabel] = useState('');
 
   const handleStartEdit = () => {
-    setEditLabel(waypoint.label);
+    setEditLabel(waypoint.isCustomName ? waypoint.label : '');
     setIsEditing(true);
   };
 
   const isFirst = waypoint.order === 1;
   const isLast = waypoint.order === waypoints.length;
 
-  let displayTitle = waypoint.label;
-  if (isFirst) {
+  let displayTitle = '';
+  if (waypoint.isCustomName) {
+    displayTitle = waypoint.label;
+  } else if (isFirst) {
     displayTitle = 'DÉPART';
   } else if (isLast) {
     displayTitle = 'ARRIVÉE';
@@ -79,6 +81,16 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
       className={`waypoint-item ${isDragging ? "dragging" : ""} ${isFirst || isLast ? "extremity" : ""}`}
     >
       <div className="waypoint-main-row">
+        {/* Poignée de drag — placée à gauche pour correspondre à la convention UX */}
+        <button
+          className="waypoint-drag-btn"
+          {...attributes}
+          {...listeners}
+          aria-label="Réorganiser"
+        >
+          <GripVertical size={16} />
+        </button>
+
         <div className="waypoint-icon-container">
           {getTypeIcon(waypoint.order, totalWaypoints)}
         </div>
@@ -101,7 +113,7 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
           </div>
 
           <div className="waypoint-info">
-            <div className="waypoint-address">{waypoint.label}</div>
+            <div className="waypoint-address">{waypoint.address || waypoint.label}</div>
           </div>
         </div>
 
@@ -121,15 +133,6 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
             aria-label="Supprimer"
           >
             <X size={16} />
-          </button>
-
-          <button
-            className="drag-handle btn-rose-outline"
-            {...attributes}
-            {...listeners}
-            aria-label="Réorganiser"
-          >
-            <GripVertical size={24} />
           </button>
         </div>
       </div>
