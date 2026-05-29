@@ -8,12 +8,15 @@ import {
     Pin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { publishItinerary } from '../../services/api.service';
+import { deletePublishedItinerary, publishItinerary } from '../../services/api.service';
 import type { Itinerary } from '../../domain';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 
 const PILL_COLORS = ['#bb487c', '#e07b4a', '#4a9ee0', '#6abf69', '#a05cc8', '#d4a843'];
+const PUBLISHED_IDS_KEY = 'c15-published-ids';
+const PUBLISHED_EVENT_IDS_KEY = 'c15-published-event-ids';
+const PINNED_IDS_KEY = 'c15-pinned-ids';
 type SortKey = 'date' | 'name' | 'steps';
 
 // Fonction simple pour avoir un hash numérique à partir d'une string (pour fixer la couleur)
@@ -38,15 +41,24 @@ export function Dashboard() {
     const logout = useAuthStore((s) => s.logout);
 
     const [isPublishing, setIsPublishing] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
         try {
-            const parsed: unknown = JSON.parse(localStorage.getItem('c15-published-ids') ?? '[]');
+            const parsed: unknown = JSON.parse(localStorage.getItem(PUBLISHED_IDS_KEY) ?? '[]');
             return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
         } catch { return new Set(); }
     });
+    const [publishedEventIds, setPublishedEventIds] = useState<Record<string, string>>(() => {
+        try {
+            const parsed: unknown = JSON.parse(localStorage.getItem(PUBLISHED_EVENT_IDS_KEY) ?? '{}');
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+                ? parsed as Record<string, string>
+                : {};
+        } catch { return {}; }
+    });
     const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
         try {
-            const parsed: unknown = JSON.parse(localStorage.getItem('c15-pinned-ids') ?? '[]');
+            const parsed: unknown = JSON.parse(localStorage.getItem(PINNED_IDS_KEY) ?? '[]');
             return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
         } catch { return new Set(); }
     });
@@ -57,11 +69,15 @@ export function Dashboard() {
     useEffect(() => { loadAll(); }, [loadAll]);
 
     useEffect(() => {
-        localStorage.setItem('c15-published-ids', JSON.stringify([...publishedIds]));
+        localStorage.setItem(PUBLISHED_IDS_KEY, JSON.stringify([...publishedIds]));
     }, [publishedIds]);
 
     useEffect(() => {
-        localStorage.setItem('c15-pinned-ids', JSON.stringify([...pinnedIds]));
+        localStorage.setItem(PUBLISHED_EVENT_IDS_KEY, JSON.stringify(publishedEventIds));
+    }, [publishedEventIds]);
+
+    useEffect(() => {
+        localStorage.setItem(PINNED_IDS_KEY, JSON.stringify([...pinnedIds]));
     }, [pinnedIds]);
 
     const handleSortClick = (key: SortKey) => {
@@ -100,12 +116,46 @@ export function Dashboard() {
         setIsPublishing(itinerary.id);
         try {
             if (!user?.id) throw new Error('ID utilisateur manquant.');
-            await publishItinerary(token, itinerary, user.id);
+            const eventId = await publishItinerary(itinerary, user.id);
             setPublishedIds(prev => new Set([...prev, itinerary.id]));
+            setPublishedEventIds(prev => ({ ...prev, [itinerary.id]: eventId }));
         } catch (error: unknown) {
             alert(`❌ Erreur : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setIsPublishing(null);
+        }
+    };
+
+    const removeLocalItinerary = (id: string) => {
+        deleteItinerary(id);
+        setPublishedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+        setPublishedEventIds(prev => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+        setPinnedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+    };
+
+    const handleDelete = async (itinerary: Itinerary) => {
+        if (!confirm('Supprimer cet itineraire ?')) return;
+
+        const serverEventId = publishedEventIds[itinerary.id];
+        if (publishedIds.has(itinerary.id) && !serverEventId) {
+            alert("Suppression serveur impossible : l'ID serveur de cet itineraire n'a pas ete conserve lors de sa publication.");
+            return;
+        }
+
+        setIsDeleting(itinerary.id);
+        try {
+            if (serverEventId) {
+                await deletePublishedItinerary(serverEventId);
+            }
+            removeLocalItinerary(itinerary.id);
+        } catch (error: unknown) {
+            alert(`Erreur suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        } finally {
+            setIsDeleting(null);
         }
     };
 
@@ -277,15 +327,14 @@ export function Dashboard() {
                                         <button
                                             className="db-action-btn db-action-btn--delete"
                                             onClick={() => {
-                                                if (confirm('Supprimer cet itinéraire ?')) {
-                                                    deleteItinerary(itinerary.id);
-                                                    setPublishedIds(prev => { const n = new Set(prev); n.delete(itinerary.id); return n; });
-                                                    setPinnedIds(prev => { const n = new Set(prev); n.delete(itinerary.id); return n; });
-                                                }
+                                                void handleDelete(itinerary);
                                             }}
                                             title="Supprimer"
+                                            disabled={isDeleting === itinerary.id}
                                         >
-                                            <Trash2 size={16} />
+                                            {isDeleting === itinerary.id
+                                                ? <Loader2 size={16} className="spin" />
+                                                : <Trash2 size={16} />}
                                         </button>
                                     </div>
                                 </div>

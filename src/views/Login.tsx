@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { API_URL } from '../config';
+import { getProfile, loginUser } from '../services/auth.service';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import { Eye, EyeOff } from 'lucide-react';
@@ -96,37 +96,15 @@ export default function Login() {
                                 setErrorMessage('');
 
                                 try {
-                                    const response = await fetch(`${API_URL}/api/auth/login`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ email, password })
-                                    });
-
-                                    if (!response.ok) {
-                                        let serverErrorMessage = "Identifiants incorrects ou adresse introuvable.";
-                                        try {
-                                            const errorData = await response.json();
-                                            serverErrorMessage = errorData.message || serverErrorMessage;
-                                        } catch { /* réponse non-JSON, on garde le message par défaut */ }
-                                        throw new Error(serverErrorMessage);
-                                    }
-
-                                    const data = await response.json();
-                                    const token = data.access_token || data.token;
+                                    const data = await loginUser(email, password);
+                                    const token = data.access_token;
 
                                     if (token) {
-                                        const profileRes = await fetch(`${API_URL}/api/auth/profile`, {
-                                            headers: { 'Authorization': `Bearer ${token}` },
-                                        });
-
-                                        if (!profileRes.ok) {
-                                            throw new Error("Impossible de récupérer le profil utilisateur.");
-                                        }
-                                        const userProfile = await profileRes.json();
+                                        const userProfile = await getProfile(token);
                                         login(token, userProfile);
                                         navigate('/dashboard', { replace: true });
                                     } else {
-                                        throw new Error("Aucun token reçu de la part du serveur.");
+                                        throw new Error("Aucun token recu de la part du serveur.");
                                     }
                                 } catch (err: unknown) {
                                     setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');

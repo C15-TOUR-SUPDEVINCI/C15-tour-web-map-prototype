@@ -69,13 +69,18 @@ const STORAGE_KEY = 'c15-itineraries';
 const getTodayStr = () => new Date().toISOString().slice(0, 16);
 const getTomorrowStr = () => new Date(Date.now() + 86400000).toISOString().slice(0, 16);
 
-// Met à jour les types des waypoints : premier et dernier = EXTREMITY, le reste = PASSAGE
+// Met à jour les types des waypoints : premier et dernier = EXTREMITY.
+// Pour les waypoints intermédiaires, seul EXTREMITY est rétrogradé en PASSAGE —
+// les types PAUSE, INTERET et USER sont préservés.
 export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
   return waypoints.map((wp, index) => {
     if (index === 0 || index === waypoints.length - 1) {
       return { ...wp, type: "EXTREMITY" };
     }
-    return { ...wp, type: "PASSAGE" };
+    if (wp.type === "EXTREMITY") {
+      return { ...wp, type: "PASSAGE" };
+    }
+    return wp;
   });
 };
 

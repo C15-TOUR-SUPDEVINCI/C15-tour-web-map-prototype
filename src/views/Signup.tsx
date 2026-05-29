@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { API_URL } from '../config';
+import { ApiHttpError } from '../lib/apiClient';
+import { createUser } from '../services/users.service';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import { Eye, EyeOff } from 'lucide-react';
@@ -62,28 +63,7 @@ export default function Signup() {
 
                             try {
                                 const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
-                                const response = await fetch(`${API_URL}/api/users`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${token}`
-                                    },
-                                    body: JSON.stringify(payload)
-                                });
-
-                                if (!response.ok) {
-                                    if (response.status === 401) {
-                                        logout();
-                                        navigate('/login');
-                                        return;
-                                    }
-                                    let serverErrorMessage = "Erreur lors de l'inscription";
-                                    try {
-                                        const errorData = await response.json();
-                                        serverErrorMessage = errorData.message || serverErrorMessage;
-                                    } catch { /* réponse non-JSON, on garde le message par défaut */ }
-                                    throw new Error(serverErrorMessage);
-                                }
+                                await createUser(payload);
 
                                 setSuccessMessage('Utilisateur créé avec succès !');
                                 setFirstName('');
@@ -94,6 +74,11 @@ export default function Signup() {
                                 setShowPassword(false);
                                 setShowConfirmPassword(false);
                             } catch (err: unknown) {
+                                if (err instanceof ApiHttpError && err.status === 401) {
+                                    logout();
+                                    navigate('/login');
+                                    return;
+                                }
                                 setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                             } finally {
                                 setLoading(false);

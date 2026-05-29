@@ -1,17 +1,12 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { API_URL } from '../config';
+import type { ApiUserResponse } from '../domain';
+import { getProfile, refreshToken } from '../services/auth.service';
 
 export const SESSION_DURATION = 60 * 60 * 1000; // 1 heure
 
-export interface AuthUser {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    role?: string;
-}
+export type AuthUser = ApiUserResponse;
 
 interface AuthState {
     token: string | null;
@@ -36,24 +31,12 @@ export const useAuthStore = create<AuthState>()(
             setInitializing: (value) => set({ isInitializing: value }),
             refreshAccessToken: async () => {
                 try {
-                    const res = await fetch(`${API_URL}/api/auth/refresh`, {
-                        method: 'POST',
-                        credentials: 'include',
-                    });
-                    if (!res.ok) return false;
-                    const data = await res.json();
-                    const newToken: string = data.access_token || data.token;
+                    const data = await refreshToken();
+                    const newToken = data.access_token;
                     if (!newToken) return false;
                     try {
-                        const profileRes = await fetch(`${API_URL}/api/auth/profile`, {
-                            headers: { 'Authorization': `Bearer ${newToken}` },
-                        });
-                        if (profileRes.ok) {
-                            const user = await profileRes.json();
-                            set({ token: newToken, loginAt: Date.now(), user });
-                        } else {
-                            set({ token: newToken, loginAt: Date.now() });
-                        }
+                        const user = await getProfile(newToken);
+                        set({ token: newToken, loginAt: Date.now(), user });
                     } catch {
                         set({ token: newToken, loginAt: Date.now() });
                     }
