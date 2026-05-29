@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { API_URL } from '../config';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import { Eye, EyeOff } from 'lucide-react';
@@ -18,9 +19,11 @@ export default function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
+    const logout = useAuthStore((state) => state.logout);
 
     return (
         <div className="signup-container">
@@ -43,16 +46,23 @@ export default function Signup() {
                             e.preventDefault();
 
                             if (password !== confirmPassword) {
+                                setSuccessMessage('');
                                 setErrorMessage('Les mots de passe ne correspondent pas.');
+                                return;
+                            }
+
+                            if (!token) {
+                                navigate('/login');
                                 return;
                             }
 
                             setLoading(true);
                             setErrorMessage('');
+                            setSuccessMessage('');
 
                             try {
                                 const payload = { firstName, lastName, email, password, role: 'ADMINISTRATEUR' };
-                                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
+                                const response = await fetch(`${API_URL}/api/users`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -62,15 +72,27 @@ export default function Signup() {
                                 });
 
                                 if (!response.ok) {
-                                    const errorData = await response.json();
                                     if (response.status === 401) {
-                                        throw new Error("L'API refuse la création sans être déjà connecté (401). Demandez une route d'inscription publique.");
+                                        logout();
+                                        navigate('/login');
+                                        return;
                                     }
-                                    throw new Error(errorData.message || "Erreur lors de l'inscription");
+                                    let serverErrorMessage = "Erreur lors de l'inscription";
+                                    try {
+                                        const errorData = await response.json();
+                                        serverErrorMessage = errorData.message || serverErrorMessage;
+                                    } catch { /* réponse non-JSON, on garde le message par défaut */ }
+                                    throw new Error(serverErrorMessage);
                                 }
 
-                                alert('Utilisateur créé avec succès !');
-                                navigate('/dashboard');
+                                setSuccessMessage('Utilisateur créé avec succès !');
+                                setFirstName('');
+                                setLastName('');
+                                setEmail('');
+                                setPassword('');
+                                setConfirmPassword('');
+                                setShowPassword(false);
+                                setShowConfirmPassword(false);
                             } catch (err: unknown) {
                                 setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                             } finally {
@@ -123,6 +145,7 @@ export default function Signup() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="signup-input"
+                                required
                             />
                         </div>
 
@@ -134,11 +157,12 @@ export default function Signup() {
                                 id="password"
                                 name="password"
                                 type={showPassword ? "text" : "password"}
-                                autoComplete="current-password"
+                                autoComplete="new-password"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="signup-input"
+                                required
                             />
                             <button
                                 type="button"
@@ -163,6 +187,7 @@ export default function Signup() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="signup-input"
+                                required
                             />
                             <button
                                 type="button"
@@ -182,6 +207,7 @@ export default function Signup() {
                     </form>
 
                     {errorMessage ? <p className="signup-error">{errorMessage}</p> : null}
+                    {successMessage ? <p className="signup-success">{successMessage}</p> : null}
 
                     <div className="signup-help">
                         <button

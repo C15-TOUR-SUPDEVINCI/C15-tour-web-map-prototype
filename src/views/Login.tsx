@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { API_URL } from '../config';
 import Input from '../components/UI/Input';
 import Button from '../components/UI/Button';
 import { Eye, EyeOff } from 'lucide-react';
@@ -31,6 +32,18 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
+    const token = useAuthStore((state) => state.token);
+    const isInitializing = useAuthStore((state) => state.isInitializing);
+
+    useEffect(() => {
+        if (!isInitializing && token) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [isInitializing, navigate, token]);
+
+    if (isInitializing || token) {
+        return null;
+    }
 
     return (
         <div className="login-root">
@@ -83,21 +96,26 @@ export default function Login() {
                                 setErrorMessage('');
 
                                 try {
-                                    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+                                    const response = await fetch(`${API_URL}/api/auth/login`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ email, password })
                                     });
 
                                     if (!response.ok) {
-                                        throw new Error("Identifiants incorrects ou adresse introuvable.");
+                                        let serverErrorMessage = "Identifiants incorrects ou adresse introuvable.";
+                                        try {
+                                            const errorData = await response.json();
+                                            serverErrorMessage = errorData.message || serverErrorMessage;
+                                        } catch { /* réponse non-JSON, on garde le message par défaut */ }
+                                        throw new Error(serverErrorMessage);
                                     }
 
                                     const data = await response.json();
                                     const token = data.access_token || data.token;
 
                                     if (token) {
-                                        const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+                                        const profileRes = await fetch(`${API_URL}/api/auth/profile`, {
                                             headers: { 'Authorization': `Bearer ${token}` },
                                         });
 
@@ -106,8 +124,10 @@ export default function Login() {
                                         }
                                         const userProfile = await profileRes.json();
                                         login(token, userProfile);
+                                        navigate('/dashboard', { replace: true });
+                                    } else {
+                                        throw new Error("Aucun token reçu de la part du serveur.");
                                     }
-                                    navigate('/dashboard');
                                 } catch (err: unknown) {
                                     setErrorMessage(err instanceof Error ? err.message : 'Une erreur est survenue.');
                                 } finally {
@@ -126,6 +146,7 @@ export default function Login() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="login-input"
+                                    required
                                 />
                             </div>
 
@@ -140,6 +161,7 @@ export default function Login() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="login-input"
+                                    required
                                 />
                                 <button
                                     type="button"

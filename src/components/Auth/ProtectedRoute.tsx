@@ -5,6 +5,15 @@ interface ProtectedRouteProps {
     children: React.ReactNode;
 }
 
+export function AuthRedirect() {
+    const token = useAuthStore((s) => s.token);
+    const isInitializing = useAuthStore((s) => s.isInitializing);
+
+    if (isInitializing) return null;
+
+    return <Navigate to={token ? '/dashboard' : '/login'} replace />;
+}
+
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const token = useAuthStore((s) => s.token);
     const isInitializing = useAuthStore((s) => s.isInitializing);
