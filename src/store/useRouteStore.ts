@@ -16,6 +16,7 @@ interface RouteStore {
   maxParticipants: number;
   waypoints: Waypoint[];
   groups: Group[];
+  groupColors: Record<string, string>; // NOUVEAU
 
   // Tous les itinéraires sauvegardés
   itineraries: Itinerary[];
@@ -56,10 +57,50 @@ interface RouteStore {
   removeGroup: (id: string) => void;
   updateGroup: (id: string, name: string) => void;
   updateGroupDetails: (id: string, updates: Partial<Group>) => void; // NOUVEAU
+  reorderGroups: (activeId: string, overId: string) => void; // NOUVEAU
   setWaypointGroup: (waypointId: string, groupId: string) => void;
 
   // Export
   generatePayload: () => RoutePayload;
+}
+
+export const COLOR_POOL = [
+  '#bb487c', // Signature Rose
+  '#7c3aed', // Vibrant Purple
+  '#ef4444', // Vibrant Red
+  '#db2777', // Magenta
+  '#6d28d9', // Deep Purple
+  '#be123c', // Crimson
+  '#d946ef', // Fuchsia
+  '#8b5cf6', // Lavender
+  '#f43f5e', // Rose Red
+  '#4f46e5', // Indigo
+  '#991b1b', // Burgundy
+  '#a21caf', // Mauve
+];
+
+function shuffleColors(): string[] {
+  const pool = [...COLOR_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+export function generateGroupColors(groupIds: string[]): Record<string, string> {
+  const colors = shuffleColors();
+  const colorMap: Record<string, string> = {};
+  
+  groupIds.forEach((id, index) => {
+    if (id === DEFAULT_GROUP_ID) {
+      colorMap[id] = '#bb487c'; // Toujours Signature Rose pour le groupe par défaut
+    } else {
+      colorMap[id] = colors[index % colors.length];
+    }
+  });
+  
+  return colorMap;
 }
 
 export const DEFAULT_GROUP_ID = 'default-group';
@@ -93,6 +134,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   maxParticipants: 50,
   waypoints: [],
   groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
+  groupColors: { [DEFAULT_GROUP_ID]: '#bb487c' },
   itineraries: [],
   routeCoordinates: [],
   routeLegs: [],
@@ -121,6 +163,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       maxParticipants: 50,
       waypoints: [],
       groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
+      groupColors: { [DEFAULT_GROUP_ID]: '#bb487c' },
       routeCoordinates: [],
       routeLegs: [],
       routeDistance: null,
@@ -165,6 +208,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
     const { itineraries } = get();
     const itinerary = itineraries.find((it) => it.id === id);
     if (itinerary) {
+      const gColors = generateGroupColors(itinerary.groups.map(g => g.id));
       set({
         currentId: itinerary.id,
         routeName: itinerary.name,
@@ -174,6 +218,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         maxParticipants: itinerary.maxParticipants || 50,
         waypoints: itinerary.waypoints,
         groups: itinerary.groups,
+        groupColors: gColors,
         routeCoordinates: [], // recalculé par RouteCalculator
         routeLegs: [],
         routeDistance: null,
@@ -200,6 +245,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       maxParticipants: 50,
       waypoints: [],
       groups: [{ id: DEFAULT_GROUP_ID, name: 'Groupe par défaut', routeType: 'MIXTE', difficultyLevel: 'MOYEN' }],
+      groupColors: { [DEFAULT_GROUP_ID]: '#bb487c' },
       routeCoordinates: [],
       routeLegs: [],
       routeDistance: null,
@@ -344,7 +390,14 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         routeType: 'MIXTE', 
         difficultyLevel: 'MOYEN' 
     };
-    set((state) => ({ groups: [...state.groups, newGroup] }));
+    set((state) => {
+      const usedColors = Object.values(state.groupColors);
+      const availableColor = COLOR_POOL.find(c => !usedColors.includes(c)) || COLOR_POOL[Math.floor(Math.random() * COLOR_POOL.length)];
+      return {
+        groups: [...state.groups, newGroup],
+        groupColors: { ...state.groupColors, [newGroup.id]: availableColor }
+      };
+    });
   },
 
   removeGroup: (id: string) => {
@@ -357,9 +410,13 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         wp.groupId === id ? { ...wp, groupId: DEFAULT_GROUP_ID } : wp
       );
 
+      const nextColors = { ...state.groupColors };
+      delete nextColors[id];
+
       return {
         groups: filteredGroups,
-        waypoints: updatedWaypoints
+        waypoints: updatedWaypoints,
+        groupColors: nextColors
       };
     });
   },
@@ -374,6 +431,58 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       set((state) => ({
         groups: state.groups.map(g => g.id === id ? { ...g, ...updates } : g)
       }));
+  },
+
+  reorderGroups: (activeId, overId) => {
+    const { groups, waypoints } = get();
+    const activeIndex = groups.findIndex((g) => g.id === activeId);
+    const overIndex = groups.findIndex((g) => g.id === overId);
+
+    if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex) return;
+
+    // 1. Reorder groups array
+    const nextGroups = [...groups];
+    const [movedGroup] = nextGroups.splice(activeIndex, 1);
+    nextGroups.splice(overIndex, 0, movedGroup);
+
+    // 2. Reorder waypoints array to match the new group order
+    const waypointsByGroup: Record<string, Waypoint[]> = {};
+    groups.forEach((g) => {
+      waypointsByGroup[g.id] = [];
+    });
+    waypointsByGroup[DEFAULT_GROUP_ID] = [];
+
+    waypoints.forEach((wp) => {
+      const gid = wp.groupId || DEFAULT_GROUP_ID;
+      if (!waypointsByGroup[gid]) {
+        waypointsByGroup[gid] = [];
+      }
+      waypointsByGroup[gid].push(wp);
+    });
+
+    const nextWaypoints: Waypoint[] = [];
+    nextGroups.forEach((g) => {
+      const groupWps = waypointsByGroup[g.id] || [];
+      nextWaypoints.push(...groupWps);
+    });
+
+    // Handle orphaned waypoints
+    Object.keys(waypointsByGroup).forEach((gid) => {
+      if (!nextGroups.some((g) => g.id === gid)) {
+        nextWaypoints.push(...waypointsByGroup[gid]);
+      }
+    });
+
+    // 3. Recalculate global order for all waypoints (1, 2, 3...)
+    const updatedWaypoints = nextWaypoints.map((wp, index) => ({
+      ...wp,
+      order: index + 1,
+    }));
+
+    set({
+      groups: nextGroups,
+      waypoints: recalcWaypointsTypes(updatedWaypoints),
+    });
   },
 
   setWaypointGroup: (waypointId: string, groupId: string) => {
