@@ -1,127 +1,60 @@
-import type { Itinerary } from '../domain';
+import type {
+    ApiEventPayload,
+    ApiPointPayload,
+    ApiRoutePayload,
+    Itinerary,
+} from '../domain';
 import { toApiPointType } from '../domain';
-import type { RouteType, DifficultyLevel } from '../domain/waypoint.types';
-import { API_URL } from '../config';
+import { createEvent, deleteEvent } from './events.service';
+import { deleteParticipation, getParticipations } from './participation.service';
+import { createPoint, deletePoint, getPoints } from './points.service';
+import { createRoute, deleteRoute, getRoutes } from './routes.service';
+import { deleteSegment, getSegments } from './segments.service';
 
-const BASE_URL = API_URL;
-
-type ApiEventPayload = {
-    title: string;
-    description: string;
-    startDate: string;
-    endDate: string;
-    maxParticipants: number;
-    organizerId: string;
+type ApiEntityId = {
+    id?: string;
+    _id?: string;
 };
 
-type ApiRoutePayload = {
-    eventId: string;
-    name: string;
-    description: string;
-    routeType: RouteType;
-    difficultyLevel: DifficultyLevel;
-    totalDistanceKm: number;
-    estimatedDurationMinutes: number;
-};
-
-type ApiPointPayload = {
-    routeId: string;
-    type: ReturnType<typeof toApiPointType>;
-    order: number;
-    latitude: number;
-    longitude: number;
-    name: string;
-    address: string;
-    description: string;
-    pauseDurationMinutes: number;
-};
-
-// Helper pour gérer les réponses d'API
-async function handleResponse(response: Response) {
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur API (${response.status}): ${errorText}`);
-    }
-    // L'API peut parfois ne renvoyer aucun contenu (ex: 201 Created sans body)
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
+function getEntityId(entity: ApiEntityId) {
+    return entity.id ?? entity._id;
 }
 
-// 1. Créer un Événement
-export async function createEvent(token: string, data: ApiEventPayload) {
-    const res = await fetch(`${BASE_URL}/api/events`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-}
-
-// 2. Créer une Route (Groupe)
-export async function createRoute(token: string, data: ApiRoutePayload) {
-    const res = await fetch(`${BASE_URL}/api/routes`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-}
-
-// 3. Créer un Point (Waypoint)
-export async function createPoint(token: string, data: ApiPointPayload) {
-    const res = await fetch(`${BASE_URL}/api/points`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-}
-
-// 4. Fonction principale : Publier un itinéraire complet
-export async function publishItinerary(token: string, itinerary: Itinerary, userId: string) {
+export async function publishItinerary(itinerary: Itinerary, userId: string) {
     const eventPayload: ApiEventPayload = {
-        title: itinerary.name || "Nouvel Itinéraire",
-        description: itinerary.description || "",
+        title: itinerary.name || 'Nouvel itineraire',
+        description: itinerary.description || '',
         startDate: itinerary.startDate || new Date().toISOString(),
-        endDate: itinerary.endDate || new Date(Date.now() + 86400000).toISOString(), // +24h par défaut
+        endDate: itinerary.endDate || new Date(Date.now() + 86400000).toISOString(),
         maxParticipants: itinerary.maxParticipants || 50,
-        organizerId: userId // Requis par l'API !
+        organizerId: userId,
     };
 
-    const createdEvent = await createEvent(token, eventPayload);
-    const eventId: string = createdEvent.id || createdEvent._id;
+    const createdEvent = await createEvent(eventPayload);
+    const eventId = getEntityId(createdEvent);
 
     if (!eventId) {
-        throw new Error("L'API n'a pas renvoyé l'ID de l'événement créé.");
+        throw new Error("L'API n'a pas renvoye l'ID de l'evenement cree.");
     }
 
     for (const group of itinerary.groups) {
         const routePayload: ApiRoutePayload = {
-            eventId: eventId,
-            name: group.name || "Route sans nom",
-            description: group.description || "",
-            routeType: group.routeType || "MIXTE",
-            difficultyLevel: group.difficultyLevel || "MOYEN",
-            totalDistanceKm: 0, // Optionnel ou à calculer si tu as la donnée dans le store plus tard
-            estimatedDurationMinutes: 0 // Optionnel
+            eventId,
+            name: group.name || 'Route sans nom',
+            description: group.description || '',
+            routeType: group.routeType || 'MIXTE',
+            difficultyLevel: group.difficultyLevel || 'MOYEN',
+            totalDistanceKm: 0,
+            estimatedDurationMinutes: 0,
         };
 
-        const createdRoute = await createRoute(token, routePayload);
-        const routeId: string = createdRoute.id || createdRoute._id;
+        const createdRoute = await createRoute(routePayload);
+        const routeId = getEntityId(createdRoute);
 
         if (!routeId) continue;
 
         const sortedWaypoints = itinerary.waypoints
-            .filter(wp => wp.groupId === group.id)
+            .filter((wp) => wp.groupId === group.id)
             .sort((a, b) => a.order - b.order);
 
         await Promise.all(
@@ -137,10 +70,46 @@ export async function publishItinerary(token: string, itinerary: Itinerary, user
                     description: wp.description || '',
                     pauseDurationMinutes: wp.pauseDurationMinutes || 0,
                 };
-                return createPoint(token, pointPayload);
+                return createPoint(pointPayload);
             })
         );
     }
 
     return eventId;
+}
+
+export async function deletePublishedItinerary(eventId: string) {
+    const [routes, participations] = await Promise.all([
+        getRoutes(),
+        getParticipations().catch(() => []),
+    ]);
+
+    const eventRoutes = routes.filter((route) => route.eventId === eventId);
+    const eventParticipations = participations.filter((participation) => participation.eventId === eventId);
+
+    await Promise.all(
+        eventRoutes.map(async (route) => {
+            const [points, segments] = await Promise.all([
+                getPoints(route.id).catch(() => []),
+                getSegments(route.id).catch(() => []),
+            ]);
+
+            await Promise.all([
+                ...segments
+                    .filter((segment) => segment.routeId === route.id)
+                    .map((segment) => deleteSegment(segment.id)),
+                ...points
+                    .filter((point) => point.routeId === route.id)
+                    .map((point) => deletePoint(point.id)),
+            ]);
+
+            await deleteRoute(route.id);
+        })
+    );
+
+    await Promise.all(
+        eventParticipations.map((participation) => deleteParticipation(participation.id))
+    );
+
+    await deleteEvent(eventId);
 }
