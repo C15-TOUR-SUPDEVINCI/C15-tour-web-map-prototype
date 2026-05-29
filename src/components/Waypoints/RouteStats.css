@@ -19,7 +19,7 @@
 
 .stat-header {
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   margin-bottom: 0.5rem;
@@ -38,13 +38,22 @@
 }
 
 .stat-value {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-/* On cache les labels pour rester minimaliste */
-.stat-label,
+/* Labels visibles sur desktop — discrets, sous la valeur */
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.1rem;
+}
+
 .stat-icon,
 .stat-divider {
   display: none;

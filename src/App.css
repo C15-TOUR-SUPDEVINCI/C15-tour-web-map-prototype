@@ -17,7 +17,7 @@
 .sidebar {
   width: 420px;
   min-width: 380px;
-  max-width: 500px;
+  max-width: 900px;
   height: 100%;
   border-right: none;
   overflow-y: auto;
@@ -50,6 +50,50 @@
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
   mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}
+
+/* Poignée de redimensionnement horizontal de la sidebar — desktop uniquement */
+.sidebar-resize-handle {
+  position: absolute;
+  left: 411px; /* 420px (width sidebar par défaut) - 9px (demi-largeur pill) */
+  top: 50%;
+  transform: translateY(-50%);
+  height: 56px;
+  width: 18px;
+  cursor: col-resize;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  z-index: 1100;
+  background: white;
+  border: 2px solid var(--primary-rose);
+  border-radius: 99px;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.sidebar-resize-handle:hover {
+  opacity: 1;
+  box-shadow: 0 2px 12px rgba(187, 72, 124, 0.25);
+}
+
+.sidebar-resize-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--primary-rose);
+  flex-shrink: 0;
+}
+
+/* Masqué sur tablette et mobile — le resize est vertical via bottom-sheet */
+@media (max-width: 1024px) {
+  .sidebar-resize-handle {
+    display: none;
+  }
 }
 
 /* La carte */

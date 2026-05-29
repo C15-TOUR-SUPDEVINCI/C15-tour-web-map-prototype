@@ -5,14 +5,14 @@ import { useRouteStore } from '../../store/useRouteStore';
 import { useNavigate } from 'react-router-dom';
 import { WaypointList } from './WaypointList';
 import { RouteStats } from './RouteStats';
-import { Download, Save, X, Pencil, Settings } from 'lucide-react';
+import { Download, Save, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
 import './WaypointPanel.css';
 
 export function WaypointPanel() {
   const navigate = useNavigate();
   const routeName = useRouteStore((state) => state.routeName);
   const setRouteName = useRouteStore((state) => state.setRouteName);
-  
+
   const routeDescription = useRouteStore((state) => state.routeDescription);
   const setRouteDescription = useRouteStore((state) => state.setRouteDescription);
   const startDate = useRouteStore((state) => state.startDate);
@@ -27,13 +27,12 @@ export function WaypointPanel() {
   const saveCurrent = useRouteStore((state) => state.saveCurrent);
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<'route' | 'event'>('route');
 
   const handleExportJSON = () => {
     const payload = generatePayload();
     const json = JSON.stringify(payload, null, 2);
 
-    // Crée un lien temporaire pour télécharger le fichier
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -49,7 +48,7 @@ export function WaypointPanel() {
     <>
       <div className="waypoint-panel">
         <header className="panel-header">
-          <div className="header-close-row">
+          <div className="header-top-row">
             <button
               className="header-icon-btn btn-rose-outline danger"
               onClick={() => {
@@ -60,8 +59,7 @@ export function WaypointPanel() {
             >
               <X size={20} />
             </button>
-          </div>
-          <div className="header-top-row">
+
             {isEditingName ? (
               <input
                 type="text"
@@ -82,46 +80,102 @@ export function WaypointPanel() {
             )}
 
             <div className="header-actions">
-              <button className="header-icon-btn btn-rose-outline" onClick={saveCurrent} title="Sauvegarder">
+              <button
+                className="header-icon-btn btn-rose-outline"
+                onClick={saveCurrent}
+                title="Sauvegarder"
+              >
                 <Save size={20} />
               </button>
-              <button className="header-icon-btn btn-rose-outline" onClick={handleExportJSON} title="Exporter">
+              <button
+                className="header-icon-btn btn-rose-outline"
+                onClick={handleExportJSON}
+                title="Exporter en JSON"
+              >
                 <Download size={20} />
               </button>
             </div>
           </div>
 
-          <button className="toggle-settings-btn" onClick={() => setShowSettings(!showSettings)}>
-             <Settings size={14} /> 
-             {showSettings ? 'Masquer les paramètres' : 'Paramètres de l\'événement'}
-          </button>
-
-          {showSettings && (
-             <div className="event-settings">
-                <div className="setting-group">
-                   <label>Description</label>
-                   <textarea className="setting-input" value={routeDescription} onChange={e => setRouteDescription(e.target.value)} rows={2} placeholder="Description de l'événement..."></textarea>
-                </div>
-                <div className="settings-row">
-                    <div className="setting-group">
-                       <label>Début</label>
-                       <input type="datetime-local" className="setting-input" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                    </div>
-                    <div className="setting-group">
-                       <label>Fin</label>
-                       <input type="datetime-local" className="setting-input" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                    </div>
-                </div>
-                <div className="setting-group">
-                   <label>Participants Max</label>
-                   <input type="number" min="1" className="setting-input" value={maxParticipants} onChange={e => setMaxParticipants(parseInt(e.target.value) || 0)} />
-                </div>
-             </div>
-          )}
+          {/* ── Navigation par onglets ── */}
+          <div className="panel-tabs" role="tablist">
+            <button
+              className={`panel-tab${activeTab === 'route' ? ' active' : ''}`}
+              onClick={() => setActiveTab('route')}
+              role="tab"
+              aria-selected={activeTab === 'route'}
+              id="tab-route"
+            >
+              <MapPin size={13} />
+              Trajet
+            </button>
+            <button
+              className={`panel-tab${activeTab === 'event' ? ' active' : ''}`}
+              onClick={() => setActiveTab('event')}
+              role="tab"
+              aria-selected={activeTab === 'event'}
+              id="tab-event"
+            >
+              <CalendarDays size={13} />
+              Événement
+            </button>
+          </div>
         </header>
 
         <div className="panel-content">
-          <WaypointList />
+          {activeTab === 'route' ? (
+            <WaypointList />
+          ) : (
+            /* ── Formulaire paramètres de l'événement ── */
+            <div className="event-settings-tab">
+              <div className="setting-group">
+                <label htmlFor="event-description">Description</label>
+                <textarea
+                  id="event-description"
+                  className="setting-input"
+                  value={routeDescription}
+                  onChange={e => setRouteDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Description de l'événement..."
+                />
+              </div>
+
+              <div className="settings-row">
+                <div className="setting-group">
+                  <label htmlFor="event-start">Début</label>
+                  <input
+                    id="event-start"
+                    type="datetime-local"
+                    className="setting-input"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="setting-group">
+                  <label htmlFor="event-end">Fin</label>
+                  <input
+                    id="event-end"
+                    type="datetime-local"
+                    className="setting-input"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="setting-group">
+                <label htmlFor="event-participants">Participants Max</label>
+                <input
+                  id="event-participants"
+                  type="number"
+                  min="1"
+                  className="setting-input"
+                  value={maxParticipants}
+                  onChange={e => setMaxParticipants(parseInt(e.target.value) || 0)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

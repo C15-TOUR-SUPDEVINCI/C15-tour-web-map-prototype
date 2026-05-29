@@ -8,8 +8,9 @@
   background-color: transparent;
   width: 100%;
   margin-bottom: 0;
-  padding: 0;
+  padding: 0 0 0.4rem 0;
   border: none;
+  border-bottom: 1px solid rgba(187, 72, 124, 0.07);
   box-shadow: none;
 }
 
@@ -55,8 +56,7 @@
 }
 
 .waypoint-title {
-  font-size: 0.95rem;
-  /* Plus compact */
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--primary-rose);
   margin: 0;
@@ -71,8 +71,41 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Espacement réduit entre les boutons */
   flex-shrink: 0;
+}
+
+/* Poignée de drag — gauche de l'item */
+.waypoint-drag-btn {
+  background: none;
+  border: none;
+  cursor: grab;
+  color: rgba(187, 72, 124, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.2s, background 0.2s;
+}
+
+.waypoint-drag-btn:hover {
+  color: var(--primary-rose);
+  background: var(--primary-rose-alpha-10);
+}
+
+.waypoint-drag-btn:active {
+  cursor: grabbing;
+}
+
+/* Adresse — texte secondaire sous le titre */
+.waypoint-address {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.1rem;
 }
 
 .item-action-btn,

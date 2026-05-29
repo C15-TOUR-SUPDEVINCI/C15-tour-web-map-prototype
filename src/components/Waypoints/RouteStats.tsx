@@ -20,10 +20,12 @@ export function RouteStats() {
       <div className="stats-grid">
         <div className="stat-item">
           <span className="stat-value">{formatDistance(routeDistance)}</span>
+          <span className="stat-label">Distance</span>
         </div>
 
         <div className="stat-item">
           <span className="stat-value">{formatDuration(routeDuration)}</span>
+          <span className="stat-label">Durée est.</span>
         </div>
       </div>
     </div>

@@ -37,4 +37,5 @@ export interface Waypoint {
     order: number;              // position dans le trajet (commence à 1)
     type: TypeOfPoint;
     groupId: string;
+    isCustomName?: boolean;     // NOUVEAU : indique si le titre a été personnalisé
 }
