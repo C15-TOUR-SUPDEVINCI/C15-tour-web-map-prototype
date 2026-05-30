@@ -13,7 +13,8 @@ export default function EditorView() {
   const openItinerary = useRouteStore((state) => state.openItinerary);
   const loadAll = useRouteStore((state) => state.loadAll);
   const currentId = useRouteStore((state) => state.currentId);
-  const itinerariesLoaded = useRouteStore((state) => state.itineraries.length > 0);
+  const serverEventId = useRouteStore((state) => state.serverEventId);
+  const itinerariesLoaded = useRouteStore((state) => state.hasLoadedItineraries);
   const itineraryExists = useRouteStore((state) => state.itineraries.some((it) => it.id === id));
 
   const sidebarRef = useRef<HTMLElement>(null);
@@ -127,18 +128,27 @@ export default function EditorView() {
   };
 
   useEffect(() => {
-    if (!itinerariesLoaded) loadAll();
+    if (!itinerariesLoaded) void loadAll();
   }, [itinerariesLoaded, loadAll]);
 
   useEffect(() => {
     if (!id || !itinerariesLoaded) return;
+    if (serverEventId && currentId === serverEventId && id !== serverEventId) {
+      navigate(`/editor/${serverEventId}`, { replace: true });
+      return;
+    }
+
     const isNew = id === currentId;
     if (itineraryExists || isNew) {
-      if (currentId !== id) openItinerary(id);
+      if (!isNew && (currentId !== id || serverEventId !== id)) {
+        void openItinerary(id).catch(() => {
+          navigate('/dashboard');
+        });
+      }
     } else {
       navigate('/dashboard');
     }
-  }, [id, itineraryExists, itinerariesLoaded, currentId, openItinerary, navigate]);
+  }, [id, itineraryExists, itinerariesLoaded, currentId, serverEventId, openItinerary, navigate]);
 
   return (
     <div className="app-container">

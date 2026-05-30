@@ -1,25 +1,28 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Loader2,
+    LogOut,
+    Pin,
+    Plus,
+    Search,
+    Trash2,
+    UserPlus,
+    X,
+} from 'lucide-react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import {
-    Plus, Trash2, X,
-    UserPlus, UploadCloud, Loader2, LogOut,
-    Search, ArrowUpDown, ArrowDown, ArrowUp,
-    Pin
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { deletePublishedItinerary, publishItinerary } from '../../services/api.service';
 import type { Itinerary } from '../../domain';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 
 const PILL_COLORS = ['#bb487c', '#e07b4a', '#4a9ee0', '#6abf69', '#a05cc8', '#d4a843'];
-const PUBLISHED_IDS_KEY = 'c15-published-ids';
-const PUBLISHED_EVENT_IDS_KEY = 'c15-published-event-ids';
 const PINNED_IDS_KEY = 'c15-pinned-ids';
-type SortKey = 'date' | 'name' | 'steps';
+type SortKey = 'date' | 'name';
 
-// Fonction simple pour avoir un hash numérique à partir d'une string (pour fixer la couleur)
 const hashString = (str: string) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -28,6 +31,9 @@ const hashString = (str: string) => {
     return Math.abs(hash);
 };
 
+const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : 'Erreur inconnue';
+
 export function Dashboard() {
     const navigate = useNavigate();
     const itineraries = useRouteStore((s) => s.itineraries);
@@ -35,46 +41,30 @@ export function Dashboard() {
     const createNew = useRouteStore((s) => s.createNew);
     const openItinerary = useRouteStore((s) => s.openItinerary);
     const deleteItinerary = useRouteStore((s) => s.deleteItinerary);
-    
-    const token = useAuthStore((s) => s.token);
+    const isLoadingItineraries = useRouteStore((s) => s.isLoadingItineraries);
+    const loadError = useRouteStore((s) => s.loadError);
+
     const user = useAuthStore((s) => s.user);
     const logout = useAuthStore((s) => s.logout);
 
-    const [isPublishing, setIsPublishing] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-    const [publishedIds, setPublishedIds] = useState<Set<string>>(() => {
-        try {
-            const parsed: unknown = JSON.parse(localStorage.getItem(PUBLISHED_IDS_KEY) ?? '[]');
-            return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
-        } catch { return new Set(); }
-    });
-    const [publishedEventIds, setPublishedEventIds] = useState<Record<string, string>>(() => {
-        try {
-            const parsed: unknown = JSON.parse(localStorage.getItem(PUBLISHED_EVENT_IDS_KEY) ?? '{}');
-            return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-                ? parsed as Record<string, string>
-                : {};
-        } catch { return {}; }
-    });
+    const [isOpening, setIsOpening] = useState<string | null>(null);
     const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
         try {
             const parsed: unknown = JSON.parse(localStorage.getItem(PINNED_IDS_KEY) ?? '[]');
             return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
-        } catch { return new Set(); }
+        } catch {
+            return new Set();
+        }
     });
     const [search, setSearch] = useState('');
     const [sortKey, setSortKey] = useState<SortKey>('date');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-    useEffect(() => { loadAll(); }, [loadAll]);
-
     useEffect(() => {
-        localStorage.setItem(PUBLISHED_IDS_KEY, JSON.stringify([...publishedIds]));
-    }, [publishedIds]);
-
-    useEffect(() => {
-        localStorage.setItem(PUBLISHED_EVENT_IDS_KEY, JSON.stringify(publishedEventIds));
-    }, [publishedEventIds]);
+        if (!user?.id) return;
+        void loadAll();
+    }, [loadAll, user?.id]);
 
     useEffect(() => {
         localStorage.setItem(PINNED_IDS_KEY, JSON.stringify([...pinnedIds]));
@@ -82,7 +72,7 @@ export function Dashboard() {
 
     const handleSortClick = (key: SortKey) => {
         if (sortKey === key) {
-            setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+            setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
         } else {
             setSortKey(key);
             setSortDir('desc');
@@ -93,91 +83,84 @@ export function Dashboard() {
         let list = [...itineraries];
         if (search.trim()) {
             const q = search.trim().toLowerCase();
-            list = list.filter(it => it.name.toLowerCase().includes(q));
+            list = list.filter((itinerary) => itinerary.name.toLowerCase().includes(q));
         }
-        
-        // Tri
+
         list.sort((a, b) => {
-            let cmp = 0;
-            if (sortKey === 'name') cmp = a.name.localeCompare(b.name);
-            else if (sortKey === 'steps') cmp = a.waypoints.length - b.waypoints.length;
-            else cmp = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime();
+            const cmp = sortKey === 'name'
+                ? a.name.localeCompare(b.name)
+                : new Date(a.startDate || a.lastModified).getTime()
+                    - new Date(b.startDate || b.lastModified).getTime();
             return sortDir === 'asc' ? cmp : -cmp;
         });
 
-        // Les épinglés vont toujours en haut
-        const pinned = list.filter(it => pinnedIds.has(it.id));
-        const unpinned = list.filter(it => !pinnedIds.has(it.id));
+        const pinned = list.filter((itinerary) => pinnedIds.has(itinerary.id));
+        const unpinned = list.filter((itinerary) => !pinnedIds.has(itinerary.id));
         return [...pinned, ...unpinned];
-    }, [itineraries, search, sortKey, sortDir, pinnedIds]);
-
-    const handlePublish = async (itinerary: Itinerary) => {
-        if (!token) { alert('Vous devez être connecté pour publier.'); return; }
-        setIsPublishing(itinerary.id);
-        try {
-            if (!user?.id) throw new Error('ID utilisateur manquant.');
-            const eventId = await publishItinerary(itinerary, user.id);
-            setPublishedIds(prev => new Set([...prev, itinerary.id]));
-            setPublishedEventIds(prev => ({ ...prev, [itinerary.id]: eventId }));
-        } catch (error: unknown) {
-            alert(`❌ Erreur : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-        } finally {
-            setIsPublishing(null);
-        }
-    };
-
-    const removeLocalItinerary = (id: string) => {
-        deleteItinerary(id);
-        setPublishedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
-        setPublishedEventIds(prev => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-        });
-        setPinnedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
-    };
+    }, [itineraries, pinnedIds, search, sortDir, sortKey]);
 
     const handleDelete = async (itinerary: Itinerary) => {
         if (!confirm('Supprimer cet itineraire ?')) return;
 
-        const serverEventId = publishedEventIds[itinerary.id];
-        if (publishedIds.has(itinerary.id) && !serverEventId) {
-            alert("Suppression serveur impossible : l'ID serveur de cet itineraire n'a pas ete conserve lors de sa publication.");
-            return;
-        }
-
         setIsDeleting(itinerary.id);
         try {
-            if (serverEventId) {
-                await deletePublishedItinerary(serverEventId);
-            }
-            removeLocalItinerary(itinerary.id);
+            await deleteItinerary(itinerary.id);
+            setPinnedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(itinerary.id);
+                return next;
+            });
         } catch (error: unknown) {
-            alert(`Erreur suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            alert(`Erreur suppression : ${getErrorMessage(error)}`);
         } finally {
             setIsDeleting(null);
         }
     };
 
-    const formatDate = (d: string) => {
-        const date = new Date(d);
+    const formatDate = (value: string) => {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Date inconnue';
+
         const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) return "Aujourd'hui";
-        if (diffDays === 1) return "Hier";
-        if (diffDays < 7) return `Il y a ${diffDays} jours`;
-        
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const isSameDay = date.toDateString() === now.toDateString();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+
+        if (isSameDay) return "Aujourd'hui";
+        if (date.toDateString() === tomorrow.toDateString()) return 'Demain';
+        if (date.toDateString() === yesterday.toDateString()) return 'Hier';
+
+        return date.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        });
     };
 
-    const handleOpen = (id: string) => { openItinerary(id); navigate(`/editor/${id}`); };
+    const handleOpen = (id: string) => {
+        void (async () => {
+            setIsOpening(id);
+            try {
+                await openItinerary(id);
+                navigate(`/editor/${id}`);
+            } catch (error: unknown) {
+                alert(`Erreur chargement : ${getErrorMessage(error)}`);
+            } finally {
+                setIsOpening(null);
+            }
+        })();
+    };
 
     const togglePin = (id: string) => {
-        setPinnedIds(prev => {
+        setPinnedIds((prev) => {
             const next = new Set(prev);
-            if (next.has(id)) { next.delete(id); } else { next.add(id); }
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
             return next;
         });
     };
@@ -197,7 +180,6 @@ export function Dashboard() {
             <div className="db-rose-overlay" aria-hidden="true" />
 
             <div className="db-layout">
-                {/* Navbar */}
                 <nav className="db-navbar">
                     <div className="db-navbar-logo">
                         <img src={logoImg} alt="C15 Tour" />
@@ -207,7 +189,7 @@ export function Dashboard() {
                             <UserPlus size={14} /><span>Utilisateur</span>
                         </button>
                         <button className="db-nav-btn db-nav-btn--logout" onClick={() => { logout(); navigate('/login'); }}>
-                            <LogOut size={14} /><span>Déconnexion</span>
+                            <LogOut size={14} /><span>Deconnexion</span>
                         </button>
                         {user?.email && (
                             <div className="db-user-pill" title={user.email}>
@@ -218,11 +200,8 @@ export function Dashboard() {
                     </div>
                 </nav>
 
-                {/* Content zone */}
                 <main className="db-main">
                     <div className="db-content">
-
-                        {/* ── Toolbar (barre de recherche + tri) ── */}
                         <div className="db-toolbar">
                             <div className="db-search-wrap">
                                 <Search size={15} className={`db-search-icon ${search ? 'db-search-icon--active' : ''}`} />
@@ -242,8 +221,8 @@ export function Dashboard() {
                             <div className="db-sort-group">
                                 <ArrowUpDown size={14} className="db-sort-icon" />
                                 <span className="db-sort-label">Trier :</span>
-                                {(['date', 'name', 'steps'] as SortKey[]).map((key) => {
-                                    const labels: Record<SortKey, string> = { date: 'Date', name: 'Nom', steps: 'Étapes' };
+                                {(['date', 'name'] as SortKey[]).map((key) => {
+                                    const labels: Record<SortKey, string> = { date: 'Début', name: 'Nom' };
                                     const active = sortKey === key;
                                     return (
                                         <button
@@ -261,30 +240,36 @@ export function Dashboard() {
                             </div>
                         </div>
 
-                        {/* ── Itinéraires (cartes séparées) ── */}
-                        {filtered.length === 0 && (
-                            <p className="db-empty">Aucun trajet trouvé.</p>
+                        {isLoadingItineraries && (
+                            <p className="db-empty">
+                                <Loader2 size={16} className="spin" /> Chargement...
+                            </p>
                         )}
 
-                        {filtered.map((itinerary, idx) => {
-                            const count = itinerary.waypoints.length;
+                        {loadError && !isLoadingItineraries && (
+                            <p className="db-empty">Erreur : {loadError}</p>
+                        )}
+
+                        {!isLoadingItineraries && !loadError && filtered.length === 0 && (
+                            <p className="db-empty">Aucun trajet trouve.</p>
+                        )}
+
+                        {!loadError && filtered.map((itinerary, idx) => {
                             const color = PILL_COLORS[hashString(itinerary.id) % PILL_COLORS.length];
                             const isPinned = pinnedIds.has(itinerary.id);
-                            const isPublished = publishedIds.has(itinerary.id);
+                            const isRowOpening = isOpening === itinerary.id;
 
                             return (
-                                <div 
-                                    key={itinerary.id} 
+                                <div
+                                    key={itinerary.id}
                                     className="db-row"
                                     style={{ animationDelay: `${idx * 0.05}s` }}
                                 >
-                                    {/* Overlay flou "Modifier" - Apparaît au hover sur toute la div .db-row */}
                                     <div className="db-edit-overlay">
                                         <span className="db-edit-text">+ Modifier</span>
                                     </div>
 
-                                    {/* Zone principale cliquable */}
-                                    <div 
+                                    <div
                                         className="db-row-main"
                                         onClick={() => handleOpen(itinerary.id)}
                                         role="button"
@@ -295,35 +280,18 @@ export function Dashboard() {
                                     >
                                         <span className="db-row-dot" style={{ background: color }} />
                                         <span className="db-row-name">{itinerary.name}</span>
-                                        <span className="db-row-meta">{count} {count > 1 ? 'étapes' : 'étape'}</span>
-                                        <span className="db-row-meta">{formatDate(itinerary.lastModified)}</span>
-                                        <span className={isPublished ? 'db-badge-synced' : 'db-badge-local'}>
-                                            {isPublished ? 'Serveur' : 'Local'}
-                                        </span>
+                                        <span className="db-row-meta">{formatDate(itinerary.startDate || itinerary.lastModified)}</span>
+                                        {isRowOpening && <Loader2 size={15} className="spin db-row-loader" />}
                                     </div>
 
-                                    {/* Zone boutons d'actions */}
                                     <div className="db-row-actions">
-                                        {/* Épingle */}
                                         <button
                                             className={`db-action-btn db-action-btn--pin${isPinned ? ' is-pinned' : ''}`}
                                             onClick={() => togglePin(itinerary.id)}
-                                            title={isPinned ? 'Désépingler' : 'Épingler en haut'}
+                                            title={isPinned ? 'Desepingler' : 'Epingler en haut'}
                                         >
                                             <Pin size={16} fill={isPinned ? 'currentColor' : 'none'} />
                                         </button>
-                                        {/* Cloud */}
-                                        <button
-                                            className={`db-action-btn db-action-btn--publish${isPublished ? ' is-published' : ''}`}
-                                            onClick={() => { if (!isPublished) handlePublish(itinerary); }}
-                                            title={isPublished ? 'Déjà sur le serveur' : 'Envoyer sur le serveur'}
-                                            disabled={isPublishing === itinerary.id || isPublished}
-                                        >
-                                            {isPublishing === itinerary.id
-                                                ? <Loader2 size={16} className="spin" />
-                                                : <UploadCloud size={16} />}
-                                        </button>
-                                        {/* Poubelle */}
                                         <button
                                             className="db-action-btn db-action-btn--delete"
                                             onClick={() => {
@@ -341,7 +309,6 @@ export function Dashboard() {
                             );
                         })}
 
-                        {/* ── Bouton Nouveau trajet — carte séparée ── */}
                         <button
                             className="db-add-row"
                             onClick={() => {
@@ -353,7 +320,6 @@ export function Dashboard() {
                             <Plus size={16} strokeWidth={2.5} />
                             <span>Nouveau trajet</span>
                         </button>
-
                     </div>
                 </main>
             </div>
