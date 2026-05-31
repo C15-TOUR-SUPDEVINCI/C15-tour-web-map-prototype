@@ -16,6 +16,7 @@ import {
 import { useRouteStore } from '../../store/useRouteStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import type { Itinerary } from '../../domain';
+import { getErrorMessage } from '../../lib/errors';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 
@@ -30,9 +31,6 @@ const hashString = (str: string) => {
     }
     return Math.abs(hash);
 };
-
-const getErrorMessage = (error: unknown) =>
-    error instanceof Error ? error.message : 'Erreur inconnue';
 
 export function Dashboard() {
     const navigate = useNavigate();

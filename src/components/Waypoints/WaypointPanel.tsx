@@ -6,10 +6,21 @@ import { useNavigate } from 'react-router-dom';
 import { WaypointList } from './WaypointList';
 import { RouteStats } from './RouteStats';
 import { AlertCircle, Cloud, Download, Loader2, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
+import { AUTOSAVE_DELAY_MS, normalizeMaxParticipants } from '../../domain/constants';
+import { getErrorMessage } from '../../lib/errors';
 import './WaypointPanel.css';
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Erreur inconnue';
+const toSafeJsonFileName = (name: string) => {
+  const safeName = name
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+
+  return `${safeName || 'itineraire'}.json`;
+};
 
 export function WaypointPanel() {
   const navigate = useNavigate();
@@ -47,7 +58,7 @@ export function WaypointPanel() {
   useEffect(() => {
     if (!currentId || !isDirty) return;
 
-    const timer = window.setTimeout(runAutoSave, 2000);
+    const timer = window.setTimeout(runAutoSave, AUTOSAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
   }, [
@@ -105,7 +116,7 @@ export function WaypointPanel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${routeName.replaceAll(/\s+/g, '_')}.json`;
+    a.download = toSafeJsonFileName(routeName);
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -245,7 +256,7 @@ export function WaypointPanel() {
                   min="1"
                   className="setting-input"
                   value={maxParticipants}
-                  onChange={e => setMaxParticipants(parseInt(e.target.value) || 0)}
+                  onChange={e => setMaxParticipants(normalizeMaxParticipants(Number.parseInt(e.target.value, 10), 1))}
                 />
               </div>
             </div>

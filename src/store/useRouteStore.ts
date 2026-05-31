@@ -4,11 +4,18 @@ import type { Waypoint, TypeOfPoint, Group } from '../domain/waypoint.types';
 import type { RoutePayload } from '../domain/route.types';
 import type { Itinerary } from '../domain/itinerary.types';
 import {
+  DEFAULT_GROUP_ID,
+  ONE_DAY_MS,
+  createDefaultGroup,
+  normalizeMaxParticipants,
+} from '../domain/constants';
+import {
   deletePublishedItinerary,
   getItinerariesFromServer,
   getItineraryFromServer,
   saveItineraryToServer,
 } from '../services/api.service';
+import { getErrorMessage } from '../lib/errors';
 import { useAuthStore } from './useAuthStore';
 
 interface RouteStore {
@@ -70,20 +77,10 @@ interface RouteStore {
   generatePayload: () => RoutePayload;
 }
 
-export const DEFAULT_GROUP_ID = 'default-group';
-
 const getTodayStr = () => new Date().toISOString().slice(0, 16);
-const getTomorrowStr = () => new Date(Date.now() + 86400000).toISOString().slice(0, 16);
+const getTomorrowStr = () => new Date(Date.now() + ONE_DAY_MS).toISOString().slice(0, 16);
 
-const createDefaultGroup = (): Group => ({
-  id: DEFAULT_GROUP_ID,
-  name: 'Groupe par defaut',
-  routeType: 'MIXTE',
-  difficultyLevel: 'MOYEN',
-});
-
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Erreur inconnue';
+export { DEFAULT_GROUP_ID };
 
 const markDirty = <T extends object>(state: RouteStore, updates: T) => ({
   ...updates,
@@ -225,23 +222,26 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       set({ isSaving: true, saveQueued: false, saveError: null });
 
       try {
-        const eventId = await saveItineraryToServer(
+        const saved = await saveItineraryToServer(
           itinerary,
           userId,
           state.serverEventId ?? undefined
         );
-        const savedItinerary = {
-          ...itinerary,
-          id: eventId,
-          lastModified: new Date().toISOString(),
-        };
+        const eventId = saved.id;
         const latest = get();
         const shouldSaveAgain = latest.saveQueued || latest.saveVersion !== savedVersion;
 
         set({
           currentId: eventId,
           serverEventId: eventId,
-          itineraries: upsertItinerary(latest.itineraries, savedItinerary),
+          itineraries: upsertItinerary(latest.itineraries, saved),
+          ...(!shouldSaveAgain
+            ? {
+                maxParticipants: saved.maxParticipants,
+                groups: saved.groups,
+                waypoints: recalcWaypointsTypes(saved.waypoints),
+              }
+            : {}),
           isSaving: false,
           saveQueued: false,
           isDirty: shouldSaveAgain,
@@ -290,7 +290,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         routeDescription: itinerary.description || '',
         startDate: itinerary.startDate || getTodayStr(),
         endDate: itinerary.endDate || getTomorrowStr(),
-        maxParticipants: itinerary.maxParticipants || 50,
+        maxParticipants: normalizeMaxParticipants(itinerary.maxParticipants),
         waypoints: recalcWaypointsTypes(itinerary.waypoints),
         groups: itinerary.groups.length > 0 ? itinerary.groups : [createDefaultGroup()],
         itineraries: upsertItinerary(state.itineraries, {
