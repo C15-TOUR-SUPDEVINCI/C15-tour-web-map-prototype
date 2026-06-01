@@ -1,5 +1,12 @@
 import type { Waypoint, Group } from './waypoint.types';
 
+export type RouteCoordinate = [number, number];
+
+export interface RouteLeg {
+    distance: number;
+    duration: number;
+}
+
 // Un itinéraire sauvegardé (contient tout ce qu'il faut pour le restaurer)
 // Ces champs correspondent au payload "Event" de l'API backend
 export interface Itinerary {
@@ -18,4 +25,6 @@ export interface Itinerary {
     // Contenu de l'itinéraire
     waypoints: Waypoint[];
     groups: Group[];
+    routeCoordinates?: RouteCoordinate[];
+    routeLegs?: RouteLeg[];
 }
