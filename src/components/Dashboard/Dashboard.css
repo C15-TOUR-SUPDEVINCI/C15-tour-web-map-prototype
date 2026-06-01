@@ -325,6 +325,10 @@
    LIGNE ITINÉRAIRE (cartes séparées)
    ════════════════════════════════════════════ */
 .db-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     text-align: center;
     color: #94a3b8;
     font-size: 0.9rem;
@@ -448,31 +452,9 @@
     /* Aligner les colonnes visuellement */
 }
 
-/* Badges Local / Serveur */
-.db-badge-local,
-.db-badge-synced {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-    flex-shrink: 0;
-    width: 70px;
-}
-
-.db-badge-local {
-    background: rgba(187, 72, 124, 0.08);
+.db-row-loader {
     color: #bb487c;
-    border: 1px solid rgba(187, 72, 124, 0.22);
-}
-
-.db-badge-synced {
-    background: rgba(34, 197, 94, 0.08);
-    color: #16a34a;
-    border: 1px solid rgba(34, 197, 94, 0.25);
+    flex-shrink: 0;
 }
 
 /* ── Zone actions (droite) ── */
@@ -516,12 +498,6 @@
 
 .db-action-btn--pin.is-pinned {
     color: #bb487c;
-}
-
-/* Cloud / Publish */
-.db-action-btn--publish:hover:not(:disabled) {
-    color: #bb487c;
-    background: rgba(187, 72, 124, 0.08);
 }
 
 /* Poubelle */
@@ -701,13 +677,6 @@
 
     .db-row-name {
         font-size: 0.85rem;
-    }
-
-    .db-badge-local,
-    .db-badge-synced {
-        font-size: 0.68rem;
-        padding: 0.15rem 0.45rem;
-        width: 58px;
     }
 
     .db-add-row {

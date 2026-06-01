@@ -1,15 +1,30 @@
 // Panneau latéral — nom du trajet, liste des waypoints, actions
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouteStore } from '../../store/useRouteStore';
 import { useNavigate } from 'react-router-dom';
 import { WaypointList } from './WaypointList';
 import { RouteStats } from './RouteStats';
-import { Download, Save, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
+import { AlertCircle, Cloud, Download, Loader2, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
+import { AUTOSAVE_DELAY_MS, normalizeMaxParticipants } from '../../domain/constants';
+import { getErrorMessage } from '../../lib/errors';
 import './WaypointPanel.css';
+
+const toSafeJsonFileName = (name: string) => {
+  const safeName = name
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+
+  return `${safeName || 'itineraire'}.json`;
+};
 
 export function WaypointPanel() {
   const navigate = useNavigate();
+  const currentId = useRouteStore((state) => state.currentId);
   const routeName = useRouteStore((state) => state.routeName);
   const setRouteName = useRouteStore((state) => state.setRouteName);
 
@@ -21,13 +36,77 @@ export function WaypointPanel() {
   const setEndDate = useRouteStore((state) => state.setEndDate);
   const maxParticipants = useRouteStore((state) => state.maxParticipants);
   const setMaxParticipants = useRouteStore((state) => state.setMaxParticipants);
+  const waypoints = useRouteStore((state) => state.waypoints);
+  const groups = useRouteStore((state) => state.groups);
+  const isDirty = useRouteStore((state) => state.isDirty);
+  const isSaving = useRouteStore((state) => state.isSaving);
+  const saveError = useRouteStore((state) => state.saveError);
+  const saveToServer = useRouteStore((state) => state.saveToServer);
 
   const generatePayload = useRouteStore((state) => state.generatePayload);
   const exitEditor = useRouteStore((state) => state.exitEditor);
-  const saveCurrent = useRouteStore((state) => state.saveCurrent);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [activeTab, setActiveTab] = useState<'route' | 'event'>('route');
+
+  const runAutoSave = useCallback(() => {
+    void saveToServer().catch((error) => {
+      console.error('Auto-save failed', error);
+    });
+  }, [saveToServer]);
+
+  useEffect(() => {
+    if (!currentId || !isDirty) return;
+
+    const timer = window.setTimeout(runAutoSave, AUTOSAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    currentId,
+    groups,
+    isDirty,
+    maxParticipants,
+    routeDescription,
+    routeName,
+    runAutoSave,
+    startDate,
+    endDate,
+    waypoints,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      const state = useRouteStore.getState();
+      if (!state.currentId || !state.isDirty) return;
+
+      void state.saveToServer().catch((error) => {
+        console.error('Auto-save flush failed', error);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentId || !isDirty) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentId, isDirty]);
+
+  const handleExit = () => {
+    void (async () => {
+      try {
+        await exitEditor();
+        navigate('/dashboard');
+      } catch (error: unknown) {
+        alert(`Erreur sauvegarde : ${getErrorMessage(error)}`);
+      }
+    })();
+  };
 
   const handleExportJSON = () => {
     const payload = generatePayload();
@@ -37,7 +116,7 @@ export function WaypointPanel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${routeName.replaceAll(/\s+/g, '_')}.json`;
+    a.download = toSafeJsonFileName(routeName);
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -51,10 +130,7 @@ export function WaypointPanel() {
           <div className="header-top-row">
             <button
               className="header-icon-btn btn-rose-outline danger"
-              onClick={() => {
-                exitEditor();
-                navigate('/dashboard');
-              }}
+              onClick={handleExit}
               title="Quitter"
             >
               <X size={20} />
@@ -80,13 +156,22 @@ export function WaypointPanel() {
             )}
 
             <div className="header-actions">
-              <button
-                className="header-icon-btn btn-rose-outline"
-                onClick={saveCurrent}
-                title="Sauvegarder"
+              <div
+                className={`autosave-status${isSaving ? ' is-saving' : ''}${saveError ? ' is-error' : ''}${isDirty ? ' is-dirty' : ''}`}
+                title={saveError || (isSaving ? 'Sauvegarde en cours' : isDirty ? 'Sauvegarde en attente' : 'Sauvegarde a jour')}
+                aria-live="polite"
               >
-                <Save size={20} />
-              </button>
+                {saveError ? (
+                  <AlertCircle size={15} />
+                ) : isSaving ? (
+                  <Loader2 size={15} className="spin" />
+                ) : (
+                  <Cloud size={15} />
+                )}
+                <span>
+                  {saveError ? 'Erreur' : isSaving ? 'Sauvegarde...' : isDirty ? 'En attente' : 'Sauvegarde'}
+                </span>
+              </div>
               <button
                 className="header-icon-btn btn-rose-outline"
                 onClick={handleExportJSON}
@@ -171,7 +256,7 @@ export function WaypointPanel() {
                   min="1"
                   className="setting-input"
                   value={maxParticipants}
-                  onChange={e => setMaxParticipants(parseInt(e.target.value) || 0)}
+                  onChange={e => setMaxParticipants(normalizeMaxParticipants(Number.parseInt(e.target.value, 10), 1))}
                 />
               </div>
             </div>

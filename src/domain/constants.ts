@@ -1,4 +1,22 @@
 import type { MapConfig } from './map.types';
+import type { Group } from './waypoint.types';
+
+export const ONE_DAY_MS = 86400000;
+export const AUTOSAVE_DELAY_MS = 2000;
+export const DEFAULT_MAX_PARTICIPANTS = 50;
+export const DEFAULT_GROUP_ID = 'default-group';
+
+export const createDefaultGroup = (): Group => ({
+  id: DEFAULT_GROUP_ID,
+  name: 'Groupe par defaut',
+  routeType: 'MIXTE',
+  difficultyLevel: 'MOYEN',
+});
+
+export function normalizeMaxParticipants(value: number | undefined, fallback = DEFAULT_MAX_PARTICIPANTS) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(1, Math.trunc(value as number));
+}
 
 // Centre par défaut : Nantes
 export const NANTES_COORDS: [number, number] = [47.218371, -1.553621];

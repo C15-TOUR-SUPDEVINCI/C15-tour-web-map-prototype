@@ -116,10 +116,10 @@ function SortableGroupSection({
               <div className="group-drag-handle" {...attributes} {...listeners} title="Glisser pour réorganiser le groupe">
                 <GripVertical size={16} />
               </div>
-              <img 
-                src={iconFlower} 
-                alt="" 
-                className="custom-icon group-header-icon" 
+              <img
+                src={iconFlower}
+                alt=""
+                className="custom-icon group-header-icon"
                 style={{ filter: `drop-shadow(0px 2px 4px ${groupColor}33)` }}
               />
               <span className="group-section-name" style={{ color: groupColor }}>{group.name}</span>
@@ -227,7 +227,7 @@ export function WaypointList() {
 
     if (isGroupDrag) {
       let targetGroupId = overId;
-      
+
       // Si on drop sur un waypoint, on trouve son groupId
       const targetWaypoint = waypoints.find((wp) => wp.id === overId);
       if (targetWaypoint) {

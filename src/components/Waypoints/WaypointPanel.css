@@ -91,7 +91,47 @@
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.autosave-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 32px;
+  padding: 0 0.55rem;
+  border: 1px solid var(--primary-rose-alpha-20);
+  border-radius: 8px;
+  color: var(--primary-rose);
+  background: var(--primary-rose-alpha-10);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.autosave-status.is-saving,
+.autosave-status.is-dirty {
+  color: #a16207;
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(254, 243, 199, 0.7);
+}
+
+.autosave-status.is-error {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(254, 226, 226, 0.75);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .header-icon-btn {
@@ -283,6 +323,10 @@
   .header-icon-btn {
     width: 44px;
     height: 44px;
+  }
+
+  .autosave-status span {
+    display: none;
   }
 
   .panel-content {
