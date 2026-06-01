@@ -28,6 +28,7 @@ interface RouteStore {
   maxParticipants: number;
   waypoints: Waypoint[];
   groups: Group[];
+  groupColors: Record<string, string>;
 
   itineraries: Itinerary[];
   hasLoadedItineraries: boolean;
@@ -72,9 +73,93 @@ interface RouteStore {
   removeGroup: (id: string) => void;
   updateGroup: (id: string, name: string) => void;
   updateGroupDetails: (id: string, updates: Partial<Group>) => void;
+  reorderGroups: (activeId: string, overId: string) => void;
   setWaypointGroup: (waypointId: string, groupId: string) => void;
 
   generatePayload: () => RoutePayload;
+}
+
+export const COLOR_POOL = [
+  '#bb487c',
+  '#7c3aed',
+  '#ef4444',
+  '#db2777',
+  '#6d28d9',
+  '#be123c',
+  '#d946ef',
+  '#8b5cf6',
+  '#f43f5e',
+  '#4f46e5',
+  '#991b1b',
+  '#a21caf',
+];
+
+const DEFAULT_GROUP_COLOR = '#bb487c';
+
+function shuffleColors(): string[] {
+  const pool = [...COLOR_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+function getAvailableGroupColor(usedColors: string[]) {
+  return COLOR_POOL.find((color) => !usedColors.includes(color))
+    ?? COLOR_POOL[Math.floor(Math.random() * COLOR_POOL.length)];
+}
+
+export function generateGroupColors(groupIds: string[]): Record<string, string> {
+  const colors = shuffleColors();
+  const colorMap: Record<string, string> = {};
+
+  groupIds.forEach((id, index) => {
+    colorMap[id] = id === DEFAULT_GROUP_ID
+      ? DEFAULT_GROUP_COLOR
+      : colors[index % colors.length];
+  });
+
+  return colorMap;
+}
+
+function mergeGroupColors(groups: Group[], currentColors: Record<string, string> = {}) {
+  const nextColors: Record<string, string> = {};
+
+  groups.forEach((group) => {
+    if (group.id === DEFAULT_GROUP_ID) {
+      nextColors[group.id] = DEFAULT_GROUP_COLOR;
+      return;
+    }
+
+    nextColors[group.id] = currentColors[group.id]
+      ?? getAvailableGroupColor(Object.values({ ...currentColors, ...nextColors }));
+  });
+
+  return nextColors;
+}
+
+function remapSavedGroupColors(
+  previousGroups: Group[],
+  savedGroups: Group[],
+  currentColors: Record<string, string>
+) {
+  const remapped: Record<string, string> = {};
+
+  savedGroups.forEach((group, index) => {
+    const previousId = previousGroups[index]?.id;
+
+    if (group.id === DEFAULT_GROUP_ID) {
+      remapped[group.id] = DEFAULT_GROUP_COLOR;
+      return;
+    }
+
+    remapped[group.id] = currentColors[group.id]
+      ?? (previousId ? currentColors[previousId] : undefined)
+      ?? getAvailableGroupColor(Object.values({ ...currentColors, ...remapped }));
+  });
+
+  return remapped;
 }
 
 const getTodayStr = () => new Date().toISOString().slice(0, 16);
@@ -113,25 +198,30 @@ const upsertItinerary = (itineraries: Itinerary[], itinerary: Itinerary) => {
   return next;
 };
 
-const resetEditorState = () => ({
-  currentId: null,
-  serverEventId: null,
-  routeName: 'Nouveau trajet',
-  routeDescription: '',
-  startDate: getTodayStr(),
-  endDate: getTomorrowStr(),
-  maxParticipants: 50,
-  waypoints: [],
-  groups: [createDefaultGroup()],
-  routeCoordinates: [],
-  routeLegs: [],
-  routeDistance: null,
-  routeDuration: null,
-  isDirty: false,
-  isSaving: false,
-  saveQueued: false,
-  saveError: null,
-});
+const resetEditorState = () => {
+  const groups = [createDefaultGroup()];
+
+  return {
+    currentId: null,
+    serverEventId: null,
+    routeName: 'Nouveau trajet',
+    routeDescription: '',
+    startDate: getTodayStr(),
+    endDate: getTomorrowStr(),
+    maxParticipants: 50,
+    waypoints: [],
+    groups,
+    groupColors: mergeGroupColors(groups),
+    routeCoordinates: [],
+    routeLegs: [],
+    routeDistance: null,
+    routeDuration: null,
+    isDirty: false,
+    isSaving: false,
+    saveQueued: false,
+    saveError: null,
+  };
+};
 
 let activeSavePromise: Promise<string | null> | null = null;
 
@@ -147,6 +237,8 @@ export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
   });
 };
 
+const initialGroups = [createDefaultGroup()];
+
 export const useRouteStore = create<RouteStore>((set, get) => ({
   currentId: null,
   serverEventId: null,
@@ -156,7 +248,8 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   endDate: getTomorrowStr(),
   maxParticipants: 50,
   waypoints: [],
-  groups: [createDefaultGroup()],
+  groups: initialGroups,
+  groupColors: mergeGroupColors(initialGroups),
   itineraries: [],
   hasLoadedItineraries: false,
   isLoadingItineraries: false,
@@ -219,6 +312,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       }
 
       const savedVersion = state.saveVersion;
+      const previousGroups = state.groups;
       set({ isSaving: true, saveQueued: false, saveError: null });
 
       try {
@@ -239,6 +333,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
             ? {
                 maxParticipants: saved.maxParticipants,
                 groups: saved.groups,
+                groupColors: remapSavedGroupColors(previousGroups, saved.groups, latest.groupColors),
                 waypoints: recalcWaypointsTypes(saved.waypoints),
               }
             : {}),
@@ -283,6 +378,8 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       if (!userId) throw new Error('ID utilisateur manquant pour ouvrir ce trajet.');
 
       const itinerary = await getItineraryFromServer(id, userId);
+      const groups = itinerary.groups.length > 0 ? itinerary.groups : [createDefaultGroup()];
+
       set((state) => ({
         currentId: itinerary.id,
         serverEventId: itinerary.id,
@@ -292,7 +389,8 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         endDate: itinerary.endDate || getTomorrowStr(),
         maxParticipants: normalizeMaxParticipants(itinerary.maxParticipants),
         waypoints: recalcWaypointsTypes(itinerary.waypoints),
-        groups: itinerary.groups.length > 0 ? itinerary.groups : [createDefaultGroup()],
+        groups,
+        groupColors: mergeGroupColors(groups, state.groupColors),
         itineraries: upsertItinerary(state.itineraries, {
           ...itinerary,
           waypoints: [],
@@ -486,7 +584,14 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       routeType: 'MIXTE',
       difficultyLevel: 'MOYEN',
     };
-    set((state) => markDirty(state, { groups: [...state.groups, newGroup] }));
+
+    set((state) => markDirty(state, {
+      groups: [...state.groups, newGroup],
+      groupColors: {
+        ...state.groupColors,
+        [newGroup.id]: getAvailableGroupColor(Object.values(state.groupColors)),
+      },
+    }));
   },
 
   removeGroup: (id) => {
@@ -502,9 +607,11 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
           ? { ...wp, groupId: fallbackGroupId }
           : wp
       );
+      const nextColors = mergeGroupColors(nextGroups, state.groupColors);
 
       return markDirty(state, {
         groups: nextGroups,
+        groupColors: nextColors,
         waypoints: updatedWaypoints,
       });
     });
@@ -523,6 +630,52 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       groups: state.groups.map((group) =>
         group.id === id ? { ...group, ...updates } : group
       ),
+    }));
+  },
+
+  reorderGroups: (activeId, overId) => {
+    const { groups, waypoints } = get();
+    const activeIndex = groups.findIndex((group) => group.id === activeId);
+    const overIndex = groups.findIndex((group) => group.id === overId);
+
+    if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex) return;
+
+    const nextGroups = [...groups];
+    const [movedGroup] = nextGroups.splice(activeIndex, 1);
+    nextGroups.splice(overIndex, 0, movedGroup);
+
+    const waypointsByGroup: Record<string, Waypoint[]> = {};
+    groups.forEach((group) => {
+      waypointsByGroup[group.id] = [];
+    });
+
+    waypoints.forEach((waypoint) => {
+      const groupId = waypoint.groupId || DEFAULT_GROUP_ID;
+      if (!waypointsByGroup[groupId]) {
+        waypointsByGroup[groupId] = [];
+      }
+      waypointsByGroup[groupId].push(waypoint);
+    });
+
+    const nextWaypoints: Waypoint[] = [];
+    nextGroups.forEach((group) => {
+      nextWaypoints.push(...(waypointsByGroup[group.id] || []));
+    });
+
+    Object.entries(waypointsByGroup).forEach(([groupId, groupWaypoints]) => {
+      if (!nextGroups.some((group) => group.id === groupId)) {
+        nextWaypoints.push(...groupWaypoints);
+      }
+    });
+
+    const updatedWaypoints = nextWaypoints.map((waypoint, index) => ({
+      ...waypoint,
+      order: index + 1,
+    }));
+
+    set((state) => markDirty(state, {
+      groups: nextGroups,
+      waypoints: recalcWaypointsTypes(updatedWaypoints),
     }));
   },
 

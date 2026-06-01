@@ -38,6 +38,9 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 0.75rem;
+  border-left: 3.5px solid var(--group-color, var(--primary-rose));
+  padding-left: 12px;
+  transition: all 0.2s ease;
 }
 
 .group-section-header {
@@ -283,4 +286,39 @@
     width: 22px;
     height: 22px;
   }
+}
+
+/* Drag & Drop - Poignée et survol de groupe */
+.group-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: var(--primary-rose-alpha-35);
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  margin-right: -4px;
+}
+
+.group-drag-handle:hover {
+  background: var(--primary-rose-alpha-10);
+  color: var(--primary-rose);
+}
+
+.group-drag-handle:active {
+  cursor: grabbing;
+}
+
+.waypoint-group-section {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.waypoint-group-section.is-dragging-group {
+  opacity: 0.35;
+  border: 1.5px dashed var(--primary-rose);
+  background: var(--primary-rose-alpha-5);
+  border-radius: 12px;
+  padding: 8px;
+  transform: scale(0.98);
 }
