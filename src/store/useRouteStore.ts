@@ -21,6 +21,7 @@ import { useAuthStore } from './useAuthStore';
 interface RouteStore {
   currentId: string | null;
   serverEventId: string | null;
+  shareCode: string | null;
   routeName: string;
   routeDescription: string;
   startDate: string;
@@ -204,6 +205,7 @@ const resetEditorState = () => {
   return {
     currentId: null,
     serverEventId: null,
+    shareCode: null,
     routeName: 'Nouveau trajet',
     routeDescription: '',
     startDate: getTodayStr(),
@@ -242,6 +244,7 @@ const initialGroups = [createDefaultGroup()];
 export const useRouteStore = create<RouteStore>((set, get) => ({
   currentId: null,
   serverEventId: null,
+  shareCode: null,
   routeName: 'Nouveau trajet',
   routeDescription: '',
   startDate: getTodayStr(),
@@ -328,6 +331,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
         set({
           currentId: eventId,
           serverEventId: eventId,
+          shareCode: saved.shareCode ?? get().shareCode,
           itineraries: upsertItinerary(latest.itineraries, saved),
           ...(!shouldSaveAgain
             ? {
@@ -383,6 +387,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       set((state) => ({
         currentId: itinerary.id,
         serverEventId: itinerary.id,
+        shareCode: itinerary.shareCode ?? null,
         routeName: itinerary.name,
         routeDescription: itinerary.description || '',
         startDate: itinerary.startDate || getTodayStr(),

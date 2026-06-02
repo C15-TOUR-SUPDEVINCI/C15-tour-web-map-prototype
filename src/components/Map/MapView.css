@@ -24,7 +24,7 @@
   cursor: grabbing;
 }
 
-/* Centrage du conteneur topleft pour la barre de recherche */
+/* Positionnement du conteneur topleft pour la barre de recherche */
 .leaflet-top.leaflet-left {
   pointer-events: none;
 }
@@ -33,11 +33,12 @@
   pointer-events: auto;
 }
 
-/* Centrage uniquement sur desktop */
+/* Aligné à droite sur desktop */
 @media (min-width: 769px) {
   .leaflet-top.leaflet-left {
-    left: 50%;
-    transform: translateX(-50%);
+    left: auto !important;
+    right: 70px !important;
+    transform: none !important;
   }
 }
 
