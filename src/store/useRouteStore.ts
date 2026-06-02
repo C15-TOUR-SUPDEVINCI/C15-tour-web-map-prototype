@@ -47,6 +47,9 @@ interface RouteStore {
   routeDistance: number | null;
   routeDuration: number | null;
 
+  focusedCoordinate: [number, number] | null;
+  focusCoordinate: (coord: [number, number] | null) => void;
+
   setRouteName: (name: string) => void;
   setRouteDescription: (desc: string) => void;
   setStartDate: (date: string) => void;
@@ -220,6 +223,7 @@ const resetEditorState = () => {
     isSaving: false,
     saveQueued: false,
     saveError: null,
+    focusedCoordinate: null,
   };
 };
 
@@ -264,6 +268,8 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
   routeLegs: [],
   routeDistance: null,
   routeDuration: null,
+  focusedCoordinate: null,
+  focusCoordinate: (coord) => set({ focusedCoordinate: coord }),
 
   loadAll: async () => {
     set({ isLoadingItineraries: true, loadError: null });

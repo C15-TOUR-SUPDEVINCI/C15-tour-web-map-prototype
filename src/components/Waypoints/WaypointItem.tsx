@@ -30,6 +30,7 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   const removeWaypoint = useRouteStore((state) => state.removeWaypoint);
   const updateWaypointLabel = useRouteStore((state) => state.updateWaypointLabel);
   const waypoints = useRouteStore((state) => state.waypoints);
+  const focusCoordinate = useRouteStore((state) => state.focusCoordinate);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState('');
@@ -37,6 +38,11 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   const handleStartEdit = () => {
     setEditLabel(waypoint.isCustomName ? waypoint.label : '');
     setIsEditing(true);
+  };
+
+  const handleFocus = () => {
+    if (isEditing) return;
+    focusCoordinate([waypoint.lat, waypoint.lng]);
   };
 
   const isFirst = waypoint.order === 1;
@@ -91,11 +97,24 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
           <GripVertical size={16} />
         </button>
 
-        <div className="waypoint-icon-container">
+        <div
+          className="waypoint-icon-container"
+          onClick={handleFocus}
+          style={{ cursor: 'pointer' }}
+          title="Cliquer pour centrer sur la carte"
+        >
           {getTypeIcon(waypoint.order, totalWaypoints)}
+          <span className="waypoint-order-badge">
+            {waypoint.order}
+          </span>
         </div>
 
-        <div className="waypoint-content">
+        <div
+          className="waypoint-content"
+          onClick={handleFocus}
+          style={{ cursor: 'pointer' }}
+          title="Cliquer pour centrer sur la carte"
+        >
           <div className="waypoint-title-container">
             {isEditing ? (
               <input
