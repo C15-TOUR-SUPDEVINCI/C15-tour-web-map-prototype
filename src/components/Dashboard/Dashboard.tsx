@@ -8,6 +8,7 @@ import {
     LogOut,
     Pin,
     Plus,
+    RefreshCw,
     Search,
     Trash2,
     UserPlus,
@@ -183,6 +184,15 @@ export function Dashboard() {
                         <img src={logoImg} alt="C15 Tour" />
                     </div>
                     <div className="db-navbar-actions">
+                        <button
+                            className="db-nav-btn"
+                            onClick={() => void loadAll()}
+                            disabled={isLoadingItineraries}
+                            title="Actualiser les trajets depuis le serveur"
+                        >
+                            <RefreshCw size={14} className={isLoadingItineraries ? 'spin' : ''} />
+                            <span>Synchroniser</span>
+                        </button>
                         <button className="db-nav-btn" onClick={() => navigate('/signup')}>
                             <UserPlus size={14} /><span>Utilisateur</span>
                         </button>
