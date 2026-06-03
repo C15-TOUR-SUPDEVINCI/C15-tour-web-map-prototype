@@ -110,9 +110,6 @@
 
 /* Marqueur custom en forme de bulle */
 .custom-marker>div {
-  border: 4px solid var(--primary-rose) !important;
-  background-color: white !important;
-  color: var(--primary-rose) !important;
   font-family: inherit;
   transition: all 0.2s;
 }

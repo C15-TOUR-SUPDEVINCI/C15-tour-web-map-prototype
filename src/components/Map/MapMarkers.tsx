@@ -43,7 +43,7 @@ export function MapMarkers({ waypoints }: MapMarkersProps) {
     <>
       {waypoints.map((waypoint) => (
         <Marker
-          key={waypoint.id}
+          key={`${waypoint.id}-${waypoint.type}-${waypoint.order}`}
           position={[waypoint.lat, waypoint.lng]}
           icon={createCustomIcon(waypoint.order, waypoint.type)}
         >

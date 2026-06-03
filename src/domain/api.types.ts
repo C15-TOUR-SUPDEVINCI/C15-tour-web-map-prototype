@@ -48,7 +48,7 @@ export interface ApiPointResponse {
     name: string;
     address: string;
     description: string;
-    pauseDurationMinutes: number;
+    pauseDurationMinutes?: number;
 }
 
 export interface ApiGpsCoordinate {
@@ -142,7 +142,7 @@ export interface ApiPointPayload {
     name: string;
     address: string;
     description: string;
-    pauseDurationMinutes: number;
+    pauseDurationMinutes?: number;
 }
 
 export interface ApiSegmentPayload {

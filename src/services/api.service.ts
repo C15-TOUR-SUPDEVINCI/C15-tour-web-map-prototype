@@ -127,17 +127,28 @@ function buildRoutePayload(
 }
 
 function buildPointPayload(routeId: string, waypoint: Waypoint): ApiPointPayload {
-    return {
+    const apiType = toApiPointType(waypoint.type);
+    const payload: ApiPointPayload = {
         routeId,
-        type: toApiPointType(waypoint.type),
+        type: apiType,
         order: waypoint.order,
         latitude: waypoint.lat,
         longitude: waypoint.lng,
         name: waypoint.label || 'Point sans nom',
         address: waypoint.address || '',
         description: waypoint.description || '',
-        pauseDurationMinutes: waypoint.pauseDurationMinutes || 0,
     };
+
+    if (apiType === 'PAUSE') {
+        const rawPauseDuration = waypoint.pauseDurationMinutes;
+        const pauseDuration = typeof rawPauseDuration === 'number' && Number.isFinite(rawPauseDuration)
+            ? rawPauseDuration
+            : 15;
+
+        payload.pauseDurationMinutes = Math.max(1, pauseDuration);
+    }
+
+    return payload;
 }
 
 function getGroupsForSave(itinerary: Itinerary) {
@@ -595,6 +606,11 @@ function routeToGroup(route: ApiRouteResponse): Group {
 }
 
 function pointToWaypoint(point: ApiPointResponse, globalOrder: number): Waypoint {
+    const rawPauseDuration = point.pauseDurationMinutes;
+    const pauseDuration = typeof rawPauseDuration === 'number' && Number.isFinite(rawPauseDuration)
+        ? Math.max(1, rawPauseDuration)
+        : 15;
+
     return {
         id: point.id,
         lat: point.latitude,
@@ -602,7 +618,7 @@ function pointToWaypoint(point: ApiPointResponse, globalOrder: number): Waypoint
         label: point.name || point.address || 'Point sans nom',
         address: point.address || '',
         description: point.description || '',
-        pauseDurationMinutes: point.pauseDurationMinutes || 0,
+        pauseDurationMinutes: point.type === 'PAUSE' ? pauseDuration : undefined,
         order: globalOrder,
         type: point.type,
         groupId: point.routeId,
