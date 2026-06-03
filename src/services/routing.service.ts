@@ -1,12 +1,37 @@
 // Service de calcul d'itinéraire via l'API OSRM
 
 import type { Waypoint } from '../domain/waypoint.types';
+import type { RouteCoordinate } from '../domain/itinerary.types';
 
 type OSRMCoordinate = [number, number]; // [lng, lat] (inversé par rapport à Leaflet)
 
+interface OSRMLeg {
+  distance: number;
+  duration: number;
+}
+
+interface OSRMRoute {
+  distance: number;
+  duration: number;
+  geometry: {
+    coordinates: OSRMCoordinate[];
+  };
+  legs: OSRMLeg[];
+}
+
+interface OSRMWaypoint {
+  waypoint_index: number;
+}
+
+interface OSRMResponse {
+  code?: string;
+  routes?: OSRMRoute[];
+  waypoints?: OSRMWaypoint[];
+}
+
 // Ce que renvoie le calcul de route
 export interface RouteResult {
-  coordinates: [number, number][]; // tracé complet [lat, lng][]
+  coordinates: RouteCoordinate[]; // tracé complet [lat, lng][]
   distance: number; // en mètres
   duration: number; // en secondes
   legs: { distance: number; duration: number }[];
@@ -20,6 +45,58 @@ export interface RouteOptions {
 
 // Serveur OSRM public (démo) — en prod il faudra notre propre instance
 const OSRM_BASE_URL = 'https://router.project-osrm.org';
+
+// Trouve pour chaque waypoint l'index correspondant dans les coordonnées calculées par OSRM
+export function findWaypointIndices(routeCoords: RouteCoordinate[], wps: Waypoint[]): number[] {
+  const indices: number[] = [];
+  let searchStart = 0;
+
+  for (let i = 0; i < wps.length; i++) {
+    const wp = wps[i];
+    let minDistance = Infinity;
+    let bestIdx = searchStart;
+
+    // Recherche de l'index le plus proche en maintenant l'ordre
+    for (let j = searchStart; j < routeCoords.length; j++) {
+      const coord = routeCoords[j];
+      const dLat = coord[0] - wp.lat;
+      const dLng = coord[1] - wp.lng;
+      const dist = dLat * dLat + dLng * dLng;
+
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestIdx = j;
+      }
+    }
+
+    indices.push(bestIdx);
+    searchStart = bestIdx;
+  }
+
+  return indices;
+}
+
+export function getWaypointPosition(waypoint: Waypoint): RouteCoordinate {
+  return [waypoint.lat, waypoint.lng];
+}
+
+export function buildLegCoordinates(
+  routeCoordinates: RouteCoordinate[],
+  startIndex: number,
+  endIndex: number,
+  startWaypoint: Waypoint,
+  endWaypoint: Waypoint
+) {
+  const start = Math.min(startIndex, endIndex);
+  const end = Math.max(startIndex, endIndex);
+  const legCoords = routeCoordinates.slice(start, end + 1);
+
+  if (legCoords.length >= 2) {
+    return legCoords;
+  }
+
+  return [getWaypointPosition(startWaypoint), getWaypointPosition(endWaypoint)];
+}
 
 // Lance le calcul de route entre les waypoints donnés
 export async function calculateRoute(
@@ -69,7 +146,7 @@ export async function calculateRoute(
       return null;
     }
 
-    const data = await response.json();
+    const data = await response.json() as OSRMResponse;
 
     if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
       console.error('No route found');
@@ -79,14 +156,14 @@ export async function calculateRoute(
     const route = data.routes[0];
 
     // On remet les coordonnées dans le bon sens pour Leaflet
-    const routeCoordinates: [number, number][] =
-      route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+    const routeCoordinates: RouteCoordinate[] =
+      route.geometry.coordinates.map((coord) => [coord[1], coord[0]]);
 
     const result: RouteResult = {
       coordinates: routeCoordinates,
       distance: route.distance,
       duration: route.duration,
-      legs: route.legs.map((leg: any) => ({
+      legs: route.legs.map((leg) => ({
         distance: leg.distance,
         duration: leg.duration,
       })),
@@ -94,7 +171,7 @@ export async function calculateRoute(
 
     // Récupère l'ordre optimisé si dispo
     if (optimize && data.waypoints) {
-      result.waypointOrder = data.waypoints.map((wp: any) => wp.waypoint_index);
+      result.waypointOrder = data.waypoints.map((wp) => wp.waypoint_index);
       console.log('Optimized waypoint order:', result.waypointOrder);
     }
 

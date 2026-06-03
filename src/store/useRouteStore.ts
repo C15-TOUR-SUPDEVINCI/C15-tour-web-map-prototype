@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import type { Waypoint, TypeOfPoint, Group } from '../domain/waypoint.types';
 import type { RoutePayload } from '../domain/route.types';
-import type { Itinerary } from '../domain/itinerary.types';
+import type { Itinerary, RouteCoordinate, RouteLeg } from '../domain/itinerary.types';
 import {
   DEFAULT_GROUP_ID,
   ONE_DAY_MS,
@@ -42,8 +42,8 @@ interface RouteStore {
   saveVersion: number;
   saveError: string | null;
 
-  routeCoordinates: [number, number][];
-  routeLegs: { distance: number; duration: number }[];
+  routeCoordinates: RouteCoordinate[];
+  routeLegs: RouteLeg[];
   routeDistance: number | null;
   routeDuration: number | null;
 
@@ -186,6 +186,8 @@ const buildCurrentItinerary = (state: RouteStore): Itinerary | null => {
     lastModified: new Date().toISOString(),
     waypoints: state.waypoints,
     groups: state.groups,
+    routeCoordinates: state.routeCoordinates,
+    routeLegs: state.routeLegs,
   };
 };
 

@@ -51,12 +51,21 @@ export interface ApiPointResponse {
     pauseDurationMinutes: number;
 }
 
+export interface ApiGpsCoordinate {
+    lat: number;
+    lon: number;
+}
+
 export interface ApiSegmentResponse {
     id: string;
     routeId: string;
-    polyline?: string;
-    distanceKm: number;
-    durationMinutes: number;
+    startPointId: string;
+    endPointId: string;
+    order: number;
+    distanceKm?: number;
+    estimatedDurationMinutes?: number;
+    gpsCoordinates?: ApiGpsCoordinate[];
+    roadType?: string;
 }
 
 export interface ApiParticipationResponse {
@@ -138,9 +147,13 @@ export interface ApiPointPayload {
 
 export interface ApiSegmentPayload {
     routeId: string;
-    polyline?: string;
-    distanceKm: number;
-    durationMinutes: number;
+    startPointId: string;
+    endPointId: string;
+    order: number;
+    distanceKm?: number;
+    estimatedDurationMinutes?: number;
+    gpsCoordinates?: ApiGpsCoordinate[];
+    roadType?: string;
 }
 
 export interface ApiSegmentPolylineResponse {
