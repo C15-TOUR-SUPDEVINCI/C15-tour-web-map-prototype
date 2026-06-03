@@ -3,7 +3,7 @@ import { GripVertical, X, Edit2, Check } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRouteStore } from '../../store/useRouteStore';
-import type { Waypoint } from '../../domain/waypoint.types';
+import type { TypeOfPoint, Waypoint } from '../../domain/waypoint.types';
 import './WaypointItem.css';
 
 import iconFlagStart from '../../assets/icons/icon-flag-start.png';
@@ -13,6 +13,16 @@ import iconTruck from '../../assets/icons/icon-truck.png';
 interface WaypointItemProps {
   readonly waypoint: Waypoint;
 }
+
+type EditablePointType = Extract<TypeOfPoint, 'PASSAGE' | 'INTERET' | 'PAUSE'>;
+
+const EDITABLE_POINT_TYPES: Array<{ value: EditablePointType; label: string }> = [
+  { value: 'PASSAGE', label: 'Passage' },
+  { value: 'INTERET', label: 'Intérêt' },
+  { value: 'PAUSE', label: 'Pause' },
+];
+
+const DEFAULT_PAUSE_DURATION_MINUTES = 15;
 
 // Choix de l'icône selon la position dans le trajet
 const getTypeIcon = (order: number, total: number) => {
@@ -29,10 +39,16 @@ const getTypeIcon = (order: number, total: number) => {
 export function WaypointItem({ waypoint }: WaypointItemProps) {
   const removeWaypoint = useRouteStore((state) => state.removeWaypoint);
   const updateWaypointLabel = useRouteStore((state) => state.updateWaypointLabel);
+  const updateWaypointDetails = useRouteStore((state) => state.updateWaypointDetails);
   const waypoints = useRouteStore((state) => state.waypoints);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState('');
+  const [pauseDurationDraft, setPauseDurationDraft] = useState(() =>
+    waypoint.type === 'PAUSE'
+      ? String(waypoint.pauseDurationMinutes ?? DEFAULT_PAUSE_DURATION_MINUTES)
+      : ''
+  );
 
   const handleStartEdit = () => {
     setEditLabel(waypoint.isCustomName ? waypoint.label : '');
@@ -58,6 +74,34 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
     setIsEditing(false);
   };
 
+  const handleTypeChange = (type: EditablePointType) => {
+    if (isFirst || isLast) return;
+    setPauseDurationDraft(type === 'PAUSE'
+      ? String(waypoint.pauseDurationMinutes ?? DEFAULT_PAUSE_DURATION_MINUTES)
+      : ''
+    );
+    updateWaypointDetails(waypoint.id, { type });
+  };
+
+  const handlePauseDurationChange = (value: string) => {
+    setPauseDurationDraft(value);
+
+    const duration = Number(value);
+    if (Number.isFinite(duration) && duration >= 1) {
+      updateWaypointDetails(waypoint.id, { pauseDurationMinutes: Math.round(duration) });
+    }
+  };
+
+  const handlePauseDurationBlur = () => {
+    const duration = Number(pauseDurationDraft);
+    const normalizedDuration = Number.isFinite(duration)
+      ? Math.max(1, Math.round(duration))
+      : DEFAULT_PAUSE_DURATION_MINUTES;
+
+    setPauseDurationDraft(String(normalizedDuration));
+    updateWaypointDetails(waypoint.id, { pauseDurationMinutes: normalizedDuration });
+  };
+
   const {
     attributes,
     listeners,
@@ -73,6 +117,8 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
     opacity: isDragging ? 0.5 : 1,
   };
   const totalWaypoints = waypoints.length;
+  const selectedPointType: EditablePointType =
+    waypoint.type === 'EXTREMITY' || waypoint.type === 'USER' ? 'PASSAGE' : waypoint.type;
 
   return (
     <div
@@ -114,6 +160,40 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
 
           <div className="waypoint-info">
             <div className="waypoint-address">{waypoint.address || waypoint.label}</div>
+            {!isFirst && !isLast && (
+              <div
+                className="waypoint-type-segmented"
+                role="group"
+                aria-label="Type de point"
+              >
+                {EDITABLE_POINT_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    className={`waypoint-type-option ${selectedPointType === type.value ? 'active' : ''}`}
+                    onClick={() => handleTypeChange(type.value)}
+                    aria-pressed={selectedPointType === type.value}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!isFirst && !isLast && selectedPointType === 'PAUSE' && (
+              <div className="waypoint-pause-duration">
+                <input
+                  type="number"
+                  className="waypoint-pause-input"
+                  min={1}
+                  step={1}
+                  value={pauseDurationDraft}
+                  onChange={(e) => handlePauseDurationChange(e.target.value)}
+                  onBlur={handlePauseDurationBlur}
+                  aria-label="Durée de pause en minutes"
+                />
+                <span className="waypoint-pause-unit">min</span>
+              </div>
+            )}
           </div>
         </div>
 

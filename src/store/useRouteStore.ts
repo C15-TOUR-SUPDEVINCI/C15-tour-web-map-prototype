@@ -226,16 +226,24 @@ const resetEditorState = () => {
 };
 
 let activeSavePromise: Promise<string | null> | null = null;
+const DEFAULT_PAUSE_DURATION_MINUTES = 15;
+
+function normalizePauseDuration(duration: number | undefined) {
+  return Number.isFinite(duration) ? Math.max(1, Math.round(duration ?? 1)) : DEFAULT_PAUSE_DURATION_MINUTES;
+}
 
 export const recalcWaypointsTypes = (waypoints: Waypoint[]): Waypoint[] => {
   return waypoints.map((wp, index) => {
     if (index === 0 || index === waypoints.length - 1) {
-      return { ...wp, type: 'EXTREMITY' };
+      return { ...wp, type: 'EXTREMITY', pauseDurationMinutes: undefined };
     }
     if (wp.type === 'EXTREMITY') {
-      return { ...wp, type: 'PASSAGE' };
+      return { ...wp, type: 'PASSAGE', pauseDurationMinutes: undefined };
     }
-    return wp;
+    if (wp.type !== 'PAUSE') {
+      return { ...wp, pauseDurationMinutes: undefined };
+    }
+    return { ...wp, pauseDurationMinutes: normalizePauseDuration(wp.pauseDurationMinutes) };
   });
 };
 
@@ -464,7 +472,7 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
       label,
       address: label,
       description: '',
-      pauseDurationMinutes: 0,
+      pauseDurationMinutes: undefined,
       order: waypoints.length + 1,
       type: type ?? 'EXTREMITY',
       groupId: targetGroupId,
@@ -521,9 +529,23 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
   updateWaypointDetails: (id, updates) => {
     set((state) => markDirty(state, {
-      waypoints: state.waypoints.map((wp) =>
-        wp.id === id ? { ...wp, ...updates } : wp
-      ),
+      waypoints: state.waypoints.map((wp) => {
+        if (wp.id !== id) return wp;
+
+        const next = { ...wp, ...updates };
+
+        if (next.type === 'PAUSE') {
+          return {
+            ...next,
+            pauseDurationMinutes: normalizePauseDuration(next.pauseDurationMinutes),
+          };
+        }
+
+        return {
+          ...next,
+          pauseDurationMinutes: undefined,
+        };
+      }),
     }));
   },
 
