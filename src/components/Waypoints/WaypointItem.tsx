@@ -76,7 +76,13 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
   }
 
   const handleSaveLabel = () => {
-    updateWaypointLabel(waypoint.id, editLabel);
+    const nextLabel = editLabel.trim();
+
+    if (nextLabel) {
+      updateWaypointLabel(waypoint.id, nextLabel);
+      setEditLabel(nextLabel);
+    }
+
     setIsEditing(false);
   };
 
@@ -161,25 +167,69 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
           style={{ cursor: 'pointer' }}
           title="Cliquer pour centrer sur la carte"
         >
-          <div className="waypoint-title-container">
-            {isEditing ? (
-              <input
-                type="text"
-                className="waypoint-title-input"
-                value={editLabel}
-                onChange={(e) => setEditLabel(e.target.value)}
-                onBlur={handleSaveLabel}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveLabel()}
-                autoFocus
-              />
-            ) : (
-              <h3 className="waypoint-title">{displayTitle}</h3>
-            )}
+          <div className="waypoint-heading-row">
+            <div className="waypoint-title-block">
+              <div className="waypoint-title-container">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="waypoint-title-input"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    onBlur={handleSaveLabel}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveLabel()}
+                    autoFocus
+                  />
+                ) : (
+                  <h3 className="waypoint-title">{displayTitle}</h3>
+                )}
+              </div>
+              <div className="waypoint-address">{waypoint.address || waypoint.label}</div>
+            </div>
+
+            <div className="waypoint-right">
+              {!isFirst && !isLast && (
+                <button
+                  className="item-action-btn btn-rose-outline"
+                  onMouseDown={(event) => {
+                    if (isEditing) {
+                      event.preventDefault();
+                    }
+                  }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (isEditing) {
+                      handleSaveLabel();
+                    } else {
+                      handleStartEdit();
+                    }
+                  }}
+                  aria-label="Modifier le nom"
+                  title="Modifier"
+                >
+                  {isEditing ? <Check size={16} /> : <Edit2 size={16} />}
+                </button>
+              )}
+              <button
+                className="item-delete-btn btn-rose-outline"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeWaypoint(waypoint.id);
+                }}
+                aria-label="Supprimer"
+                title="Supprimer"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
-          <div className="waypoint-info">
-            <div className="waypoint-address">{waypoint.address || waypoint.label}</div>
-            {!isFirst && !isLast && (
+          {!isFirst && !isLast && (
+            <div
+              className="waypoint-controls-row"
+              onClick={(event) => event.stopPropagation()}
+              title=""
+            >
               <div
                 className="waypoint-type-segmented"
                 role="group"
@@ -197,8 +247,7 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
                   </button>
                 ))}
               </div>
-            )}
-            {!isFirst && !isLast && selectedPointType === 'PAUSE' && (
+            {selectedPointType === 'PAUSE' && (
               <div className="waypoint-pause-duration">
                 <input
                   type="number"
@@ -213,26 +262,8 @@ export function WaypointItem({ waypoint }: WaypointItemProps) {
                 <span className="waypoint-pause-unit">min</span>
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="waypoint-right">
-          {!isFirst && !isLast && (
-            <button
-              className="item-action-btn btn-rose-outline"
-              onClick={() => isEditing ? handleSaveLabel() : handleStartEdit()}
-              aria-label="Modifier le nom"
-            >
-              {isEditing ? <Check size={16} /> : <Edit2 size={16} />}
-            </button>
+            </div>
           )}
-          <button
-            className="item-delete-btn btn-rose-outline"
-            onClick={() => removeWaypoint(waypoint.id)}
-            aria-label="Supprimer"
-          >
-            <X size={16} />
-          </button>
         </div>
       </div>
     </div>
