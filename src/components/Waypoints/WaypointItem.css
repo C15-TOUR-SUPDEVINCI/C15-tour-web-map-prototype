@@ -109,6 +109,70 @@
   margin-top: 0.1rem;
 }
 
+.waypoint-type-segmented {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.12rem;
+  border: 1px solid var(--primary-rose-alpha-20);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  gap: 0.12rem;
+}
+
+.waypoint-type-option {
+  border: none;
+  background: transparent;
+  color: var(--primary-rose);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.32rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.waypoint-type-option:hover,
+.waypoint-type-option:focus-visible {
+  background: var(--primary-rose-alpha-10);
+  outline: none;
+}
+
+.waypoint-type-option.active {
+  background: var(--primary-rose);
+  color: #fff;
+}
+
+.waypoint-pause-duration {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.35rem;
+  border: 1px solid var(--primary-rose-alpha-20);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  overflow: hidden;
+}
+
+.waypoint-pause-input {
+  width: 56px;
+  border: none;
+  color: var(--primary-rose);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.2rem 0.28rem 0.45rem;
+  outline: none;
+}
+
+.waypoint-pause-unit {
+  padding: 0 0.45rem 0 0.2rem;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .item-action-btn,
 .item-delete-btn {
   width: 34px !important;
@@ -202,6 +266,20 @@
     padding: 0.2rem 0.35rem;
   }
 
+  .waypoint-type-option {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.34rem;
+  }
+
+  .waypoint-pause-input {
+    width: 50px;
+    font-size: 0.68rem;
+  }
+
+  .waypoint-pause-unit {
+    font-size: 0.68rem;
+  }
+
   .group-label {
     display: none;
   }
@@ -256,3 +334,4 @@
     border-width: 1.5px;
   }
 }
+/* Bouton suppr */

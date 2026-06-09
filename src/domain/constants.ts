@@ -58,7 +58,7 @@ export const MESSAGES = {
 
 // Couleurs des marqueurs selon le type de waypoint
 export const WAYPOINT_COLORS = {
-  PAUSE: '#bb487c',
+  PAUSE: '#0ea5e9',
   PASSAGE: '#bb487c',
   EXTREMITY: '#8e355d', // plus foncé pour départ/arrivée
   USER: '#d16b9a',

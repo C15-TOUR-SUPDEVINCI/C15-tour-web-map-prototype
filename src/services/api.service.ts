@@ -5,6 +5,8 @@ import type {
     ApiPointResponse,
     ApiRoutePayload,
     ApiRouteResponse,
+    ApiSegmentPayload,
+    ApiSegmentResponse,
     Group,
     Itinerary,
     Waypoint,
@@ -19,7 +21,8 @@ import { createEvent, deleteEvent, getEventById, getEvents, updateEvent } from '
 import { deleteParticipation, getParticipations } from './participation.service';
 import { createPoint, deletePoint, getPoints, updatePoint } from './points.service';
 import { createRoute, deleteRoute, getRoutes, updateRoute } from './routes.service';
-import { deleteSegment, getSegments } from './segments.service';
+import { buildLegCoordinates, findWaypointIndices } from './routing.service';
+import { createSegment, deleteSegment, getSegments, updateSegment } from './segments.service';
 
 type ApiEntityId = {
     id?: string;
@@ -30,6 +33,11 @@ type RouteWithPoints = {
     route: ApiRouteResponse;
     points: ApiPointResponse[];
     index: number;
+};
+
+type SavedRoutePoints = {
+    waypoints: Waypoint[];
+    pointBySourceId: Map<string, Waypoint>;
 };
 
 const ROUTE_ORDER_PATTERN = /^\[tour-map-route-order:(\d+)]\n?/;
@@ -98,45 +106,107 @@ function assertOrganizer(event: ApiEventResponse, userId: string) {
     }
 }
 
-function buildRoutePayload(eventId: string, group: Group, order: number): ApiRoutePayload {
+function buildRoutePayload(
+    eventId: string,
+    group: Group,
+    groups: Group[],
+    itinerary: Itinerary,
+    order: number
+): ApiRoutePayload {
+    const totals = getRouteTotals(itinerary, group, groups);
+
     return {
         eventId,
         name: group.name || 'Route sans nom',
         description: encodeRouteDescription(group.description, order),
         routeType: group.routeType || 'MIXTE',
         difficultyLevel: group.difficultyLevel || 'MOYEN',
-        totalDistanceKm: 0,
-        estimatedDurationMinutes: 0,
+        totalDistanceKm: totals.totalDistanceKm,
+        estimatedDurationMinutes: totals.estimatedDurationMinutes,
     };
 }
 
 function buildPointPayload(routeId: string, waypoint: Waypoint): ApiPointPayload {
-    return {
+    const apiType = toApiPointType(waypoint.type);
+    const payload: ApiPointPayload = {
         routeId,
-        type: toApiPointType(waypoint.type),
+        type: apiType,
         order: waypoint.order,
         latitude: waypoint.lat,
         longitude: waypoint.lng,
         name: waypoint.label || 'Point sans nom',
         address: waypoint.address || '',
         description: waypoint.description || '',
-        pauseDurationMinutes: waypoint.pauseDurationMinutes || 0,
     };
+
+    if (apiType === 'PAUSE') {
+        const rawPauseDuration = waypoint.pauseDurationMinutes;
+        const pauseDuration = typeof rawPauseDuration === 'number' && Number.isFinite(rawPauseDuration)
+            ? rawPauseDuration
+            : 15;
+
+        payload.pauseDurationMinutes = Math.max(1, pauseDuration);
+    }
+
+    return payload;
 }
 
 function getGroupsForSave(itinerary: Itinerary) {
     return itinerary.groups.length > 0 ? itinerary.groups : [createDefaultGroup()];
 }
 
-function getGroupWaypoints(itinerary: Itinerary, group: Group, groups: Group[]) {
-    const groupIds = new Set(groups.map((item) => item.id));
-    const firstGroupId = groups[0]?.id;
+function getSortedWaypoints(itinerary: Itinerary) {
+    return [...itinerary.waypoints].sort((a, b) => a.order - b.order);
+}
 
+function getWaypointGroupIdForSave(waypoint: Waypoint, groups: Group[]) {
+    const groupIds = new Set(groups.map((item) => item.id));
+
+    if (groupIds.has(waypoint.groupId)) {
+        return waypoint.groupId;
+    }
+
+    return groups[0]?.id;
+}
+
+function areWaypointsInGroup(start: Waypoint, end: Waypoint, group: Group, groups: Group[]) {
+    return getWaypointGroupIdForSave(start, groups) === group.id
+        && getWaypointGroupIdForSave(end, groups) === group.id;
+}
+
+function getRouteTotals(itinerary: Itinerary, group: Group, groups: Group[]) {
+    const routeLegs = itinerary.routeLegs ?? [];
+
+    if (routeLegs.length === 0) {
+        return { totalDistanceKm: 0, estimatedDurationMinutes: 0 };
+    }
+
+    const sortedWaypoints = getSortedWaypoints(itinerary);
+    let totalDistanceMeters = 0;
+    let totalDurationSeconds = 0;
+
+    for (let index = 0; index < sortedWaypoints.length - 1; index++) {
+        const start = sortedWaypoints[index];
+        const end = sortedWaypoints[index + 1];
+        const leg = routeLegs[index];
+
+        if (!leg || !areWaypointsInGroup(start, end, group, groups)) {
+            continue;
+        }
+
+        totalDistanceMeters += Number.isFinite(leg.distance) ? leg.distance : 0;
+        totalDurationSeconds += Number.isFinite(leg.duration) ? leg.duration : 0;
+    }
+
+    return {
+        totalDistanceKm: totalDistanceMeters / 1000,
+        estimatedDurationMinutes: Math.round(totalDurationSeconds / 60),
+    };
+}
+
+function getGroupWaypoints(itinerary: Itinerary, group: Group, groups: Group[]) {
     return itinerary.waypoints
-        .filter((waypoint) =>
-            waypoint.groupId === group.id
-            || (group.id === firstGroupId && !groupIds.has(waypoint.groupId))
-        )
+        .filter((waypoint) => getWaypointGroupIdForSave(waypoint, groups) === group.id)
         .sort((a, b) => a.order - b.order);
 }
 
@@ -242,10 +312,11 @@ async function syncPointsForRoute(
     groups: Group[],
     itinerary: Itinerary,
     existingPoints: ApiPointResponse[]
-) {
+): Promise<SavedRoutePoints> {
     const sortedWaypoints = getGroupWaypoints(itinerary, group, groups);
     const usedPointIds = new Set<string>();
     const savedWaypoints: Waypoint[] = [];
+    const pointBySourceId = new Map<string, Waypoint>();
     const allowIndexFallback = !sortedWaypoints.some((waypoint) =>
         existingPoints.some((point) => point.id === waypoint.id)
     );
@@ -262,21 +333,27 @@ async function syncPointsForRoute(
 
         if (existingPoint) {
             const updatedPoint = await updatePoint(existingPoint.id, pointPayload);
-            savedWaypoints.push({
+            const savedWaypoint = {
                 ...waypoint,
                 id: getEntityId(updatedPoint) ?? existingPoint.id,
                 groupId: routeId,
-            });
+            };
+
+            savedWaypoints.push(savedWaypoint);
+            pointBySourceId.set(waypoint.id, savedWaypoint);
         } else {
             const createdPoint = await createPoint(pointPayload);
             const pointId = getEntityId(createdPoint);
 
             if (pointId) {
-                savedWaypoints.push({
+                const savedWaypoint = {
                     ...waypoint,
                     id: pointId,
                     groupId: routeId,
-                });
+                };
+
+                savedWaypoints.push(savedWaypoint);
+                pointBySourceId.set(waypoint.id, savedWaypoint);
             }
         }
     }
@@ -284,7 +361,146 @@ async function syncPointsForRoute(
     const pointsToDelete = existingPoints.filter((point) => !usedPointIds.has(point.id));
     await Promise.all(pointsToDelete.map((point) => deletePoint(point.id)));
 
-    return savedWaypoints;
+    return { waypoints: savedWaypoints, pointBySourceId };
+}
+
+function buildSegmentPayloadsForRoute(
+    routeId: string,
+    group: Group,
+    groups: Group[],
+    itinerary: Itinerary,
+    pointBySourceId: Map<string, Waypoint>
+) {
+    const sortedWaypoints = getSortedWaypoints(itinerary);
+    const routeLegs = itinerary.routeLegs ?? [];
+    const routeCoordinates = itinerary.routeCoordinates ?? [];
+    const hasCompleteRoutingData = routeLegs.length >= sortedWaypoints.length - 1
+        && routeCoordinates.length >= 2;
+    const waypointIndices = hasCompleteRoutingData
+        ? findWaypointIndices(routeCoordinates, sortedWaypoints)
+        : [];
+    const payloads: ApiSegmentPayload[] = [];
+    let segmentOrder = 1;
+
+    for (let index = 0; index < sortedWaypoints.length - 1; index++) {
+        const start = sortedWaypoints[index];
+        const end = sortedWaypoints[index + 1];
+
+        if (!areWaypointsInGroup(start, end, group, groups)) {
+            continue;
+        }
+
+        const savedStart = pointBySourceId.get(start.id);
+        const savedEnd = pointBySourceId.get(end.id);
+
+        if (!savedStart || !savedEnd) {
+            continue;
+        }
+
+        const payload: ApiSegmentPayload = {
+            routeId,
+            startPointId: savedStart.id,
+            endPointId: savedEnd.id,
+            order: segmentOrder,
+        };
+
+        if (hasCompleteRoutingData) {
+            const leg = routeLegs[index];
+
+            if (leg && Number.isFinite(leg.distance)) {
+                payload.distanceKm = leg.distance / 1000;
+            }
+
+            if (leg && Number.isFinite(leg.duration)) {
+                payload.estimatedDurationMinutes = Math.round(leg.duration / 60);
+            }
+
+            const startIndex = waypointIndices[index];
+            const endIndex = waypointIndices[index + 1];
+
+            if (Number.isInteger(startIndex) && Number.isInteger(endIndex)) {
+                payload.gpsCoordinates = buildLegCoordinates(
+                    routeCoordinates,
+                    startIndex,
+                    endIndex,
+                    start,
+                    end
+                ).map(([lat, lng]) => ({ lat, lon: lng }));
+            }
+        }
+
+        payloads.push(payload);
+        segmentOrder += 1;
+    }
+
+    return payloads;
+}
+
+function pickSegmentMatch(
+    payload: ApiSegmentPayload,
+    existingSegments: ApiSegmentResponse[],
+    usedSegmentIds: Set<string>
+) {
+    const pairMatch = existingSegments.find((segment) =>
+        !usedSegmentIds.has(segment.id)
+        && segment.startPointId === payload.startPointId
+        && segment.endPointId === payload.endPointId
+    );
+
+    if (pairMatch) {
+        usedSegmentIds.add(pairMatch.id);
+        return pairMatch;
+    }
+
+    const canFallbackByOrder = !existingSegments.some((segment) =>
+        segment.startPointId && segment.endPointId
+    );
+
+    if (!canFallbackByOrder) {
+        return undefined;
+    }
+
+    const orderMatch = existingSegments.find((segment) =>
+        !usedSegmentIds.has(segment.id)
+        && segment.order === payload.order
+    );
+
+    if (orderMatch) {
+        usedSegmentIds.add(orderMatch.id);
+    }
+
+    return orderMatch;
+}
+
+async function syncSegmentsForRoute(
+    routeId: string,
+    group: Group,
+    groups: Group[],
+    itinerary: Itinerary,
+    pointBySourceId: Map<string, Waypoint>,
+    existingSegments: ApiSegmentResponse[]
+) {
+    const desiredSegments = buildSegmentPayloadsForRoute(
+        routeId,
+        group,
+        groups,
+        itinerary,
+        pointBySourceId
+    );
+    const usedSegmentIds = new Set<string>();
+
+    for (const payload of desiredSegments) {
+        const existingSegment = pickSegmentMatch(payload, existingSegments, usedSegmentIds);
+
+        if (existingSegment) {
+            await updateSegment(existingSegment.id, payload);
+        } else {
+            await createSegment(payload);
+        }
+    }
+
+    const segmentsToDelete = existingSegments.filter((segment) => !usedSegmentIds.has(segment.id));
+    await Promise.all(segmentsToDelete.map((segment) => deleteSegment(segment.id)));
 }
 
 async function syncRoutesAndPoints(eventId: string, itinerary: Itinerary) {
@@ -300,7 +516,7 @@ async function syncRoutesAndPoints(eventId: string, itinerary: Itinerary) {
     for (const [index, group] of groups.entries()) {
         const routeOrder = index + 1;
         const existingRoute = pickRouteMatch(group, existingRoutes, usedRouteIds, index, allowIndexFallback);
-        const routePayload = buildRoutePayload(eventId, group, routeOrder);
+        const routePayload = buildRoutePayload(eventId, group, groups, itinerary, routeOrder);
         let routeId: string | undefined;
 
         if (existingRoute) {
@@ -321,14 +537,25 @@ async function syncRoutesAndPoints(eventId: string, itinerary: Itinerary) {
             difficultyLevel: group.difficultyLevel || 'MOYEN',
         });
 
-        const savedRouteWaypoints = await syncPointsForRoute(
+        const savedRoutePoints = await syncPointsForRoute(
             routeId,
             group,
             groups,
             itinerary,
             existingRoute?.points ?? []
         );
-        savedWaypoints.push(...savedRouteWaypoints);
+
+        const existingSegments = await getSegments(routeId);
+        await syncSegmentsForRoute(
+            routeId,
+            group,
+            groups,
+            itinerary,
+            savedRoutePoints.pointBySourceId,
+            existingSegments.filter((segment) => segment.routeId === routeId)
+        );
+
+        savedWaypoints.push(...savedRoutePoints.waypoints);
     }
 
     const routesToDelete = existingRoutes.filter((entry) => !usedRouteIds.has(entry.route.id));
@@ -379,6 +606,11 @@ function routeToGroup(route: ApiRouteResponse): Group {
 }
 
 function pointToWaypoint(point: ApiPointResponse, globalOrder: number): Waypoint {
+    const rawPauseDuration = point.pauseDurationMinutes;
+    const pauseDuration = typeof rawPauseDuration === 'number' && Number.isFinite(rawPauseDuration)
+        ? Math.max(1, rawPauseDuration)
+        : 15;
+
     return {
         id: point.id,
         lat: point.latitude,
@@ -386,7 +618,7 @@ function pointToWaypoint(point: ApiPointResponse, globalOrder: number): Waypoint
         label: point.name || point.address || 'Point sans nom',
         address: point.address || '',
         description: point.description || '',
-        pauseDurationMinutes: point.pauseDurationMinutes || 0,
+        pauseDurationMinutes: point.type === 'PAUSE' ? pauseDuration : undefined,
         order: globalOrder,
         type: point.type,
         groupId: point.routeId,

@@ -2,61 +2,9 @@
 
 import { Polyline } from 'react-leaflet';
 import { useRouteStore } from '../../store/useRouteStore';
-import type { Waypoint } from '../../domain/waypoint.types';
+import { buildLegCoordinates, findWaypointIndices } from '../../services/routing.service';
 
 const DEFAULT_ROUTE_COLOR = '#bb487c';
-
-// Trouve pour chaque waypoint l'index correspondant dans les coordonnées calculées par OSRM
-function findWaypointIndices(routeCoords: [number, number][], wps: Waypoint[]): number[] {
-  const indices: number[] = [];
-  let searchStart = 0;
-
-  for (let i = 0; i < wps.length; i++) {
-    const wp = wps[i];
-    let minDistance = Infinity;
-    let bestIdx = searchStart;
-
-    // Recherche de l'index le plus proche en maintenant l'ordre
-    for (let j = searchStart; j < routeCoords.length; j++) {
-      const coord = routeCoords[j];
-      const dLat = coord[0] - wp.lat;
-      const dLng = coord[1] - wp.lng;
-      const dist = dLat * dLat + dLng * dLng;
-
-      if (dist < minDistance) {
-        minDistance = dist;
-        bestIdx = j;
-      }
-    }
-
-    indices.push(bestIdx);
-    searchStart = bestIdx;
-  }
-
-  return indices;
-}
-
-function getWaypointPosition(waypoint: Waypoint): [number, number] {
-  return [waypoint.lat, waypoint.lng];
-}
-
-function buildLegCoordinates(
-  routeCoordinates: [number, number][],
-  startIndex: number,
-  endIndex: number,
-  startWaypoint: Waypoint,
-  endWaypoint: Waypoint
-) {
-  const start = Math.min(startIndex, endIndex);
-  const end = Math.max(startIndex, endIndex);
-  const legCoords = routeCoordinates.slice(start, end + 1);
-
-  if (legCoords.length >= 2) {
-    return legCoords;
-  }
-
-  return [getWaypointPosition(startWaypoint), getWaypointPosition(endWaypoint)];
-}
 
 export function RoutePolyline() {
   const routeCoordinates = useRouteStore((state) => state.routeCoordinates);
