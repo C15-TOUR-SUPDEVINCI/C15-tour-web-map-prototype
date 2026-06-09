@@ -19,7 +19,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useRouteStore, DEFAULT_GROUP_ID } from '../../store/useRouteStore';
 import { WaypointItem } from './WaypointItem';
-import { MESSAGES } from '../../domain/constants';
 import { formatDistance, formatDuration } from '../../services/routing.service';
 import './WaypointList.css';
 
