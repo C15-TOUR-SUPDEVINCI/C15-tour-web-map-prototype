@@ -19,7 +19,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useRouteStore, DEFAULT_GROUP_ID } from '../../store/useRouteStore';
 import { WaypointItem } from './WaypointItem';
-import { MESSAGES } from '../../domain/constants';
 import { formatDistance, formatDuration } from '../../services/routing.service';
 import './WaypointList.css';
 
@@ -261,14 +260,10 @@ export function WaypointList() {
   if (waypoints.length === 0) {
     return (
       <div className="empty-state">
-        <p className="empty-message">{MESSAGES.noWaypoints}</p>
-        <div className="empty-instructions">
-          <p>💡 <strong>Astuce :</strong></p>
-          <ul>
-            <li>Recherchez une adresse en haut à droite de la carte</li>
-            <li>Ou cliquez directement sur la carte</li>
-          </ul>
-        </div>
+        <h3 className="empty-title">Commencez votre trajet</h3>
+        <p className="empty-message">
+          Recherchez une adresse en haut à droite ou cliquez directement sur la carte pour ajouter vos premières étapes.
+        </p>
       </div>
     );
   }

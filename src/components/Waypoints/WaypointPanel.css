@@ -59,7 +59,7 @@
 
 .route-name-display {
   font-size: 1.1rem;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--primary-rose);
   margin: 0;
   text-transform: uppercase;
@@ -78,7 +78,7 @@
 .route-name-input {
   flex: 1;
   font-size: 1.1rem;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--primary-rose);
   background: transparent;
   border: none;
@@ -106,7 +106,7 @@
   color: var(--primary-rose);
   background: var(--primary-rose-alpha-10);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -264,7 +264,7 @@
   color: var(--primary-rose);
   border-radius: var(--radius-md);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   margin-bottom: 1rem;
   transition: all 0.2s;

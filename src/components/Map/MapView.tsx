@@ -45,6 +45,26 @@ function MapClickHandler() {
   return null;
 }
 
+// Gère le centrage automatique de la carte (Fly-To) lorsqu'un waypoint est ciblé dans la liste
+function MapFocusHandler() {
+  const map = useMap();
+  const focusedCoordinate = useRouteStore((state) => state.focusedCoordinate);
+  const focusCoordinate = useRouteStore((state) => state.focusCoordinate);
+
+  useEffect(() => {
+    if (focusedCoordinate) {
+      map.flyTo(focusedCoordinate, 16, {
+        animate: true,
+        duration: 1.2,
+      });
+      // Réinitialise la coordonnée pour pouvoir recentrer si on reclique sur le même point
+      focusCoordinate(null);
+    }
+  }, [focusedCoordinate, map, focusCoordinate]);
+
+  return null;
+}
+
 // Carte Leaflet avec tous les contrôles et couches
 export function MapView() {
   const waypoints = useRouteStore((state) => state.waypoints);
@@ -65,6 +85,7 @@ export function MapView() {
         />
 
         <MapInvalidator />
+        <MapFocusHandler />
         <ZoomControl position="topright" />
         <SearchControl />
         <MapClickHandler />

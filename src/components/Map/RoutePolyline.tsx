@@ -29,7 +29,8 @@ export function RoutePolyline() {
     // Extraction de la section de tracé pour cette étape
     const legCoords = buildLegCoordinates(routeCoordinates, startIdx, endIdx, wp1, wp2);
 
-    const color = groupColors[wp2.groupId] || groupColors[wp1.groupId] || DEFAULT_ROUTE_COLOR;
+    // La liaison inter-groupes (transition) garde la couleur du premier groupe jusqu'au 1er point de l'autre groupe
+    const color = groupColors[wp1.groupId] || DEFAULT_ROUTE_COLOR;
 
     polylines.push(
       <Polyline
