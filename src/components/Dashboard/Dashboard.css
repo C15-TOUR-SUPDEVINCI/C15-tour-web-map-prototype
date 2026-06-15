@@ -572,19 +572,36 @@
     min-width: 0;
 }
 
-/* Sur mobile, le badge passe en dessous */
+/* Badge inline (dans db-row-actions) — caché sur desktop, affiché sur mobile */
+.db-share-badge--inline {
+    display: none;
+    height: 36px;
+    padding: 0 0.85rem;
+    font-size: 0.75rem;
+    border-radius: 8px;
+}
+
+/* Badge externe (sibling du .db-row) — visible sur desktop, caché sur mobile */
+.db-share-badge--external {
+    display: inline-flex;
+}
+
+/* Sur mobile (≤ 560px) : inverser la visibilité des deux badges */
 @media (max-width: 560px) {
+    /* Le wrapper reste en ligne, plus de colonne qui crée des espaces vides */
     .db-row-wrapper {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.4rem;
+        flex-direction: row;
+        align-items: center;
     }
 
-    .db-share-badge {
-        align-self: flex-end;
-        font-size: 0.75rem;
-        padding: 0 1rem;
-        height: 42px;
+    /* Badge externe masqué — plus d'espace vide entre les cartes */
+    .db-share-badge--external {
+        display: none;
+    }
+
+    /* Badge inline visible — intégré dans la carte blanche */
+    .db-share-badge--inline {
+        display: inline-flex;
     }
 }
 

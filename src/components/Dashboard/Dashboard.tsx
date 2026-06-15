@@ -313,12 +313,24 @@ export function Dashboard() {
                                                     ? <Loader2 size={16} className="spin" />
                                                     : <Trash2 size={16} />}
                                             </button>
+                                            {/* Badge inline dans la carte — visible uniquement sur mobile */}
+                                            {itinerary.shareCode && (
+                                                <button
+                                                    className={`db-share-badge db-share-badge--inline${isCopied ? ' db-share-badge--copied' : ''}`}
+                                                    onClick={handleCopyShareCode}
+                                                    title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
+                                                >
+                                                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                                                    {itinerary.shareCode}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
+                                    {/* Badge externe — visible uniquement sur desktop (sibling du .db-row) */}
                                     {itinerary.shareCode && (
                                         <button
-                                            className={`db-share-badge${isCopied ? ' db-share-badge--copied' : ''}`}
+                                            className={`db-share-badge db-share-badge--external${isCopied ? ' db-share-badge--copied' : ''}`}
                                             onClick={handleCopyShareCode}
                                             title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
                                         >
