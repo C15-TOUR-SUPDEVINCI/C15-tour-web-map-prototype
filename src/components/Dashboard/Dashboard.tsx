@@ -4,6 +4,8 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
+    Check,
+    Copy,
     Loader2,
     LogOut,
     Pin,
@@ -48,6 +50,7 @@ export function Dashboard() {
 
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isOpening, setIsOpening] = useState<string | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
     const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
         try {
             const parsed: unknown = JSON.parse(localStorage.getItem(PINNED_IDS_KEY) ?? '[]');
@@ -266,53 +269,87 @@ export function Dashboard() {
                             const color = PILL_COLORS[hashString(itinerary.id) % PILL_COLORS.length];
                             const isPinned = pinnedIds.has(itinerary.id);
                             const isRowOpening = isOpening === itinerary.id;
+                            const isCopied = copiedId === itinerary.id;
+
+                            const handleCopyShareCode = () => {
+                                if (!itinerary.shareCode) return;
+                                void navigator.clipboard.writeText(itinerary.shareCode).then(() => {
+                                    setCopiedId(itinerary.id);
+                                    setTimeout(() => setCopiedId(null), 2000);
+                                });
+                            };
 
                             return (
-                                <div
-                                    key={itinerary.id}
-                                    className="db-row"
-                                    style={{ animationDelay: `${idx * 0.05}s` }}
-                                >
-                                    <div className="db-edit-overlay">
-                                        <span className="db-edit-text">+ Modifier</span>
-                                    </div>
-
+                                <div key={itinerary.id} className="db-row-wrapper" style={{ animationDelay: `${idx * 0.05}s` }}>
                                     <div
-                                        className="db-row-main"
-                                        onClick={() => handleOpen(itinerary.id)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') handleOpen(itinerary.id);
-                                        }}
+                                        className="db-row"
                                     >
-                                        <span className="db-row-dot" style={{ background: color }} />
-                                        <span className="db-row-name">{itinerary.name}</span>
-                                        <span className="db-row-meta">{formatDate(itinerary.startDate || itinerary.lastModified)}</span>
-                                        {isRowOpening && <Loader2 size={15} className="spin db-row-loader" />}
+                                        <div className="db-edit-overlay">
+                                            <span className="db-edit-text">+ Modifier</span>
+                                        </div>
+
+                                        <div
+                                            className="db-row-main"
+                                            onClick={() => handleOpen(itinerary.id)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') handleOpen(itinerary.id);
+                                            }}
+                                        >
+                                            <span className="db-row-dot" style={{ background: color }} />
+                                            <span className="db-row-name">{itinerary.name}</span>
+                                            <span className="db-row-meta">{formatDate(itinerary.startDate || itinerary.lastModified)}</span>
+                                            {isRowOpening && <Loader2 size={15} className="spin db-row-loader" />}
+                                        </div>
+
+                                        <div className="db-row-actions">
+                                            <button
+                                                className={`db-action-btn db-action-btn--pin${isPinned ? ' is-pinned' : ''}`}
+                                                onClick={() => togglePin(itinerary.id)}
+                                                title={isPinned ? 'Desepingler' : 'Epingler en haut'}
+                                            >
+                                                <Pin size={16} fill={isPinned ? 'currentColor' : 'none'} />
+                                            </button>
+                                            <button
+                                                className="db-action-btn db-action-btn--delete"
+                                                onClick={() => {
+                                                    void handleDelete(itinerary);
+                                                }}
+                                                title="Supprimer"
+                                                disabled={isDeleting === itinerary.id}
+                                            >
+                                                {isDeleting === itinerary.id
+                                                    ? <Loader2 size={16} className="spin" />
+                                                    : <Trash2 size={16} />}
+                                            </button>
+                                            {/* Badge inline dans la carte — visible uniquement sur mobile */}
+                                            {itinerary.shareCode && (
+                                                <button
+                                                    className={`db-share-badge db-share-badge--inline${isCopied ? ' db-share-badge--copied' : ''}`}
+                                                    onClick={handleCopyShareCode}
+                                                    title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
+                                                >
+                                                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                                                    {itinerary.shareCode}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <div className="db-row-actions">
+                                    {/* Badge externe — visible uniquement sur desktop (sibling du .db-row) */}
+                                    {itinerary.shareCode && (
                                         <button
-                                            className={`db-action-btn db-action-btn--pin${isPinned ? ' is-pinned' : ''}`}
-                                            onClick={() => togglePin(itinerary.id)}
-                                            title={isPinned ? 'Desepingler' : 'Epingler en haut'}
+                                            className={`db-share-badge db-share-badge--external${isCopied ? ' db-share-badge--copied' : ''}`}
+                                            onClick={handleCopyShareCode}
+                                            title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
                                         >
-                                            <Pin size={16} fill={isPinned ? 'currentColor' : 'none'} />
+                                            {isCopied
+                                                ? <Check size={13} />
+                                                : <Copy size={13} />}
+                                            {itinerary.shareCode}
                                         </button>
-                                        <button
-                                            className="db-action-btn db-action-btn--delete"
-                                            onClick={() => {
-                                                void handleDelete(itinerary);
-                                            }}
-                                            title="Supprimer"
-                                            disabled={isDeleting === itinerary.id}
-                                        >
-                                            {isDeleting === itinerary.id
-                                                ? <Loader2 size={16} className="spin" />
-                                                : <Trash2 size={16} />}
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
                             );
                         })}

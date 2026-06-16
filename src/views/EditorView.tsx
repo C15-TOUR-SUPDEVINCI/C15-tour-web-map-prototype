@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Copy, Check } from 'lucide-react';
 import { useRouteStore } from '../store/useRouteStore';
 import { WaypointPanel } from '../components/Waypoints/WaypointPanel';
 import { MapView } from '../components/Map/MapView';
@@ -17,6 +18,18 @@ export default function EditorView() {
   const itinerariesLoaded = useRouteStore((state) => state.hasLoadedItineraries);
   const isOpeningItinerary = useRouteStore((state) => state.isOpeningItinerary);
   const itineraryExists = useRouteStore((state) => state.itineraries.some((it) => it.id === id));
+
+  const shareCode = useRouteStore((state) => state.shareCode);
+  const [isCopied, setIsCopied] = useState(false);
+  const shareBadgeRef = useRef<HTMLButtonElement>(null);
+
+  const handleCopyShareCode = () => {
+    if (!shareCode) return;
+    void navigator.clipboard.writeText(shareCode).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
 
   const sidebarRef = useRef<HTMLElement>(null);
   const dragStartY = useRef<number>(0);
@@ -65,13 +78,8 @@ export default function EditorView() {
       if (resizeHandleRef.current) {
         resizeHandleRef.current.style.left = `${newW - 9}px`;
       }
-      // Centre le geocoder dans la zone carte résiduelle (desktop uniquement)
-      if (window.innerWidth > 1024) {
-        const geocoderParent = document.querySelector('.leaflet-top.leaflet-left') as HTMLElement | null;
-        if (geocoderParent) {
-          const pct = (newW / window.innerWidth) * 50 + 50;
-          geocoderParent.style.left = `${pct}%`;
-        }
+      if (shareBadgeRef.current) {
+        shareBadgeRef.current.style.left = `${newW + 24}px`;
       }
     },
     end: () => {
@@ -94,16 +102,21 @@ export default function EditorView() {
     };
   }, []);
 
-  // Initialise la position de la poignée selon la largeur réelle de la sidebar après rendu
+  // Initialise la position de la poignée et du badge selon la largeur réelle de la sidebar après rendu
   useEffect(() => {
     const init = () => {
-      if (!sidebarRef.current || !resizeHandleRef.current) return;
+      if (!sidebarRef.current) return;
       const w = sidebarRef.current.getBoundingClientRect().width;
-      resizeHandleRef.current.style.left = `${w - 9}px`;
+      if (resizeHandleRef.current) {
+        resizeHandleRef.current.style.left = `${w - 9}px`;
+      }
+      if (shareBadgeRef.current) {
+        shareBadgeRef.current.style.left = `${w + 24}px`;
+      }
     };
     const raf = requestAnimationFrame(init);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [shareCode]);
 
   const startDrag = (clientY: number) => {
     if (!sidebarRef.current) return;
@@ -162,6 +175,19 @@ export default function EditorView() {
         />
         <WaypointPanel />
       </aside>
+
+      {/* Badge de partage flottant à droite de la sidebar */}
+      {shareCode && (
+        <button
+          ref={shareBadgeRef}
+          className={`editor-share-badge${isCopied ? ' editor-share-badge--copied' : ''}`}
+          onClick={handleCopyShareCode}
+          title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
+        >
+          {isCopied ? <Check size={13} /> : <Copy size={13} />}
+          {shareCode}
+        </button>
+      )}
 
       {/* Poignée de redimensionnement horizontal — sibling de la sidebar, pas enfant */}
       <div

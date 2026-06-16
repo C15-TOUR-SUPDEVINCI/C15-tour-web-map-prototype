@@ -22,6 +22,9 @@ export interface Itinerary {
     endDate: string;                // ex: "2024-12-25T18:00:00Z"
     maxParticipants: number;        // nombre max de participants
 
+    // Code de partage généré par le back-end
+    shareCode?: string;
+
     // Contenu de l'itinéraire
     waypoints: Waypoint[];
     groups: Group[];

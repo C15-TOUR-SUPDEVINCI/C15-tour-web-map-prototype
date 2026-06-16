@@ -588,6 +588,7 @@ function eventToItinerary(
         endDate,
         maxParticipants: normalizeMaxParticipants(event.maxParticipants),
         lastModified: startDate,
+        shareCode: event.shareCode || undefined,
         groups,
         waypoints,
     };
