@@ -161,7 +161,13 @@
   padding: 0 !important;
 }
 
-.header-icon-btn.danger:hover {
+.header-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none !important;
+}
+
+.header-icon-btn.danger:hover:not(:disabled) {
   background-color: #fee2e2 !important;
   color: #dc2626 !important;
   border-color: #f87171 !important;

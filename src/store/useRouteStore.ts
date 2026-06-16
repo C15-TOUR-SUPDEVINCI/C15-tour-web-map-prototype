@@ -63,6 +63,7 @@ interface RouteStore {
   openItinerary: (id: string) => Promise<void>;
   deleteItinerary: (id: string) => Promise<void>;
   exitEditor: () => Promise<void>;
+  discardEditorAndExit: () => void;
 
   addWaypoint: (lat: number, lng: number, label: string, type?: TypeOfPoint) => void;
   removeWaypoint: (id: string) => void;
@@ -463,6 +464,10 @@ export const useRouteStore = create<RouteStore>((set, get) => ({
 
   exitEditor: async () => {
     await get().saveToServer();
+    set(resetEditorState());
+  },
+
+  discardEditorAndExit: () => {
     set(resetEditorState());
   },
 
