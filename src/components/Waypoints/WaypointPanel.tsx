@@ -8,6 +8,7 @@ import { RouteStats } from './RouteStats';
 import { AlertCircle, Cloud, Download, Loader2, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
 import { AUTOSAVE_DELAY_MS, normalizeMaxParticipants } from '../../domain/constants';
 import { getErrorMessage } from '../../lib/errors';
+import { ShareCodeButton } from '../UI/ShareCodeButton';
 import './WaypointPanel.css';
 
 const toSafeJsonFileName = (name: string) => {
@@ -42,6 +43,7 @@ export function WaypointPanel() {
   const isSaving = useRouteStore((state) => state.isSaving);
   const saveError = useRouteStore((state) => state.saveError);
   const saveToServer = useRouteStore((state) => state.saveToServer);
+  const shareCode = useRouteStore((state) => state.shareCode);
 
   const generatePayload = useRouteStore((state) => state.generatePayload);
   const exitEditor = useRouteStore((state) => state.exitEditor);
@@ -156,6 +158,12 @@ export function WaypointPanel() {
             )}
 
             <div className="header-actions">
+              {shareCode && (
+                <ShareCodeButton
+                  shareCode={shareCode}
+                  className="panel-share-code-button"
+                />
+              )}
               <div
                 className={`autosave-status${isSaving ? ' is-saving' : ''}${saveError ? ' is-error' : ''}${isDirty ? ' is-dirty' : ''}`}
                 title={saveError || (isSaving ? 'Sauvegarde en cours' : isDirty ? 'Sauvegarde en attente' : 'Sauvegarde a jour')}

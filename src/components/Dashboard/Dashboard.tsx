@@ -4,8 +4,6 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
-    Check,
-    Copy,
     Loader2,
     LogOut,
     Pin,
@@ -20,6 +18,7 @@ import { useRouteStore } from '../../store/useRouteStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import type { Itinerary } from '../../domain';
 import { getErrorMessage } from '../../lib/errors';
+import { ShareCodeButton } from '../UI/ShareCodeButton';
 import './Dashboard.css';
 import logoImg from '../../assets/logo-tour95.png';
 
@@ -50,7 +49,6 @@ export function Dashboard() {
 
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isOpening, setIsOpening] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
     const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
         try {
             const parsed: unknown = JSON.parse(localStorage.getItem(PINNED_IDS_KEY) ?? '[]');
@@ -269,15 +267,6 @@ export function Dashboard() {
                             const color = PILL_COLORS[hashString(itinerary.id) % PILL_COLORS.length];
                             const isPinned = pinnedIds.has(itinerary.id);
                             const isRowOpening = isOpening === itinerary.id;
-                            const isCopied = copiedId === itinerary.id;
-
-                            const handleCopyShareCode = () => {
-                                if (!itinerary.shareCode) return;
-                                void navigator.clipboard.writeText(itinerary.shareCode).then(() => {
-                                    setCopiedId(itinerary.id);
-                                    setTimeout(() => setCopiedId(null), 2000);
-                                });
-                            };
 
                             return (
                                 <div key={itinerary.id} className="db-row-wrapper" style={{ animationDelay: `${idx * 0.05}s` }}>
@@ -325,31 +314,15 @@ export function Dashboard() {
                                             </button>
                                             {/* Badge inline dans la carte — visible uniquement sur mobile */}
                                             {itinerary.shareCode && (
-                                                <button
-                                                    className={`db-share-badge db-share-badge--inline${isCopied ? ' db-share-badge--copied' : ''}`}
-                                                    onClick={handleCopyShareCode}
-                                                    title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
-                                                >
-                                                    {isCopied ? <Check size={12} /> : <Copy size={12} />}
-                                                    {itinerary.shareCode}
-                                                </button>
+                                                <ShareCodeButton
+                                                    shareCode={itinerary.shareCode}
+                                                    className="db-share-code-button"
+                                                />
                                             )}
                                         </div>
                                     </div>
 
                                     {/* Badge externe — visible uniquement sur desktop (sibling du .db-row) */}
-                                    {itinerary.shareCode && (
-                                        <button
-                                            className={`db-share-badge db-share-badge--external${isCopied ? ' db-share-badge--copied' : ''}`}
-                                            onClick={handleCopyShareCode}
-                                            title={isCopied ? 'Copié !' : 'Cliquer pour copier le code de partage'}
-                                        >
-                                            {isCopied
-                                                ? <Check size={13} />
-                                                : <Copy size={13} />}
-                                            {itinerary.shareCode}
-                                        </button>
-                                    )}
                                 </div>
                             );
                         })}
