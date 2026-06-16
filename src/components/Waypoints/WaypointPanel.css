@@ -31,6 +31,7 @@
   align-items: center;
   gap: 1rem;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .route-name-section {
@@ -41,7 +42,7 @@
 }
 
 .route-name-container {
-  flex: 1;
+  flex: 1 1 140px;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -79,7 +80,7 @@
 }
 
 .route-name-input {
-  flex: 1;
+  flex: 1 1 140px;
   min-width: 0;
   font-size: 1.1rem;
   font-weight: 800;
@@ -97,11 +98,17 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
 }
 
 .panel-share-code-button {
   width: 126px;
+  max-width: 100%;
   height: 32px;
   padding: 0 0.7rem;
   border-radius: 8px;

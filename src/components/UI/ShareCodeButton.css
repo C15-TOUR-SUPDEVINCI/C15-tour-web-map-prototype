@@ -28,6 +28,11 @@
   transform: scale(0.97);
 }
 
+.share-code-button:focus-visible {
+  outline: 2px solid rgba(187, 72, 124, 0.55);
+  outline-offset: 2px;
+}
+
 .share-code-button--copied {
   background: #16a34a;
   box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
@@ -36,6 +41,16 @@
 .share-code-button--copied:hover {
   background: #15803d;
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.45);
+}
+
+.share-code-button--failed {
+  background: #dc2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.share-code-button--failed:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
 }
 
 .share-code-button svg {

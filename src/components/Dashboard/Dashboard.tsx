@@ -312,7 +312,7 @@ export function Dashboard() {
                                                     ? <Loader2 size={16} className="spin" />
                                                     : <Trash2 size={16} />}
                                             </button>
-                                            {/* Badge inline dans la carte — visible uniquement sur mobile */}
+                                            {/* Badge de copie interne, visible sur desktop et mobile */}
                                             {itinerary.shareCode && (
                                                 <ShareCodeButton
                                                     shareCode={itinerary.shareCode}
@@ -322,7 +322,6 @@ export function Dashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Badge externe — visible uniquement sur desktop (sibling du .db-row) */}
                                 </div>
                             );
                         })}
