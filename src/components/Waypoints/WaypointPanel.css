@@ -30,6 +30,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .route-name-section {
@@ -40,6 +42,8 @@
 }
 
 .route-name-container {
+  flex: 1 1 140px;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -76,7 +80,8 @@
 }
 
 .route-name-input {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--primary-rose);
@@ -93,6 +98,22 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.panel-share-code-button {
+  width: 126px;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 0.7rem;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  flex-shrink: 0;
 }
 
 .autosave-status {
@@ -140,7 +161,13 @@
   padding: 0 !important;
 }
 
-.header-icon-btn.danger:hover {
+.header-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none !important;
+}
+
+.header-icon-btn.danger:hover:not(:disabled) {
   background-color: #fee2e2 !important;
   color: #dc2626 !important;
   border-color: #f87171 !important;
@@ -329,6 +356,14 @@
     display: none;
   }
 
+  .panel-share-code-button {
+    width: 104px;
+    height: 36px;
+    gap: 0.35rem;
+    padding: 0 0.55rem;
+    font-size: 0.68rem;
+  }
+
   .panel-content {
     padding: 0.75rem 1rem;
   }
@@ -361,6 +396,16 @@
 
   .route-name-display {
     font-size: 0.88rem;
+  }
+
+  .header-actions {
+    gap: 0.35rem;
+  }
+
+  .panel-share-code-button {
+    width: 88px;
+    padding: 0 0.45rem;
+    font-size: 0.64rem;
   }
 
   .panel-content {

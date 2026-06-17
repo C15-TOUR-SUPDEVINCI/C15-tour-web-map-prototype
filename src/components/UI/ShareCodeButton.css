@@ -1,0 +1,65 @@
+.share-code-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 0;
+  background: #bb487c;
+  color: white;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  font-family: 'Inter', monospace, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
+  box-shadow: 0 2px 8px rgba(187, 72, 124, 0.35);
+}
+
+.share-code-button:hover {
+  background: #a63070;
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(187, 72, 124, 0.45);
+}
+
+.share-code-button:active {
+  transform: scale(0.97);
+}
+
+.share-code-button:focus-visible {
+  outline: 2px solid rgba(187, 72, 124, 0.55);
+  outline-offset: 2px;
+}
+
+.share-code-button--copied {
+  background: #16a34a;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+}
+
+.share-code-button--copied:hover {
+  background: #15803d;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.45);
+}
+
+.share-code-button--failed {
+  background: #dc2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.share-code-button--failed:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
+}
+
+.share-code-button svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.share-code-button__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

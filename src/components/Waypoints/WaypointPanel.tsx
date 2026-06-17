@@ -8,6 +8,7 @@ import { RouteStats } from './RouteStats';
 import { AlertCircle, Cloud, Download, Loader2, X, Pencil, MapPin, CalendarDays } from 'lucide-react';
 import { AUTOSAVE_DELAY_MS, normalizeMaxParticipants } from '../../domain/constants';
 import { getErrorMessage } from '../../lib/errors';
+import { ShareCodeButton } from '../UI/ShareCodeButton';
 import './WaypointPanel.css';
 
 const toSafeJsonFileName = (name: string) => {
@@ -42,9 +43,11 @@ export function WaypointPanel() {
   const isSaving = useRouteStore((state) => state.isSaving);
   const saveError = useRouteStore((state) => state.saveError);
   const saveToServer = useRouteStore((state) => state.saveToServer);
+  const shareCode = useRouteStore((state) => state.shareCode);
 
   const generatePayload = useRouteStore((state) => state.generatePayload);
   const exitEditor = useRouteStore((state) => state.exitEditor);
+  const discardEditorAndExit = useRouteStore((state) => state.discardEditorAndExit);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [activeTab, setActiveTab] = useState<'route' | 'event'>('route');
@@ -75,17 +78,6 @@ export function WaypointPanel() {
   ]);
 
   useEffect(() => {
-    return () => {
-      const state = useRouteStore.getState();
-      if (!state.currentId || !state.isDirty) return;
-
-      void state.saveToServer().catch((error) => {
-        console.error('Auto-save flush failed', error);
-      });
-    };
-  }, []);
-
-  useEffect(() => {
     if (!currentId || !isDirty) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -98,6 +90,20 @@ export function WaypointPanel() {
   }, [currentId, isDirty]);
 
   const handleExit = () => {
+    if (isSaving) return;
+
+    if (saveError) {
+      const shouldLeave = window.confirm(
+        'La sauvegarde a échoué. Si vous quittez maintenant, les dernières modifications non sauvegardées seront perdues. Quitter quand même ?'
+      );
+
+      if (!shouldLeave) return;
+
+      discardEditorAndExit();
+      navigate('/dashboard');
+      return;
+    }
+
     void (async () => {
       try {
         await exitEditor();
@@ -131,6 +137,7 @@ export function WaypointPanel() {
             <button
               className="header-icon-btn btn-rose-outline danger"
               onClick={handleExit}
+              disabled={isSaving}
               title="Quitter"
             >
               <X size={20} />
@@ -156,6 +163,12 @@ export function WaypointPanel() {
             )}
 
             <div className="header-actions">
+              {shareCode && (
+                <ShareCodeButton
+                  shareCode={shareCode}
+                  className="panel-share-code-button"
+                />
+              )}
               <div
                 className={`autosave-status${isSaving ? ' is-saving' : ''}${saveError ? ' is-error' : ''}${isDirty ? ' is-dirty' : ''}`}
                 title={saveError || (isSaving ? 'Sauvegarde en cours' : isDirty ? 'Sauvegarde en attente' : 'Sauvegarde a jour')}
